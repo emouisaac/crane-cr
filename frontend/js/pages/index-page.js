@@ -57,6 +57,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     modal?.classList.remove("active");
   }
 
+  const sidebarOverlay = document.querySelector(".sidebar-overlay");
+  const dashboardSidebar = document.querySelector(".dashboard-sidebar");
+  const contactModal = document.querySelector(".contact-modal-overlay");
+
+  function closeSidebar() {
+    sidebarOverlay?.classList.remove("active");
+    dashboardSidebar?.classList.remove("active");
+  }
+
+  function isAuthenticated() {
+    const account = window.CraneAuth?.getAccount?.();
+    return Boolean(account && account.role === "user");
+  }
+
+  function openContactModal() {
+    contactModal?.classList.toggle("active");
+  }
+
+  function updateLiveStatusFAB(status, count = 0) {
+    const fab = document.querySelector(".live-status-fab");
+    const titleEl = fab?.querySelector(".live-status-title");
+    const badgeEl = fab?.querySelector(".live-status-badge");
+    
+    if (titleEl) {
+      titleEl.textContent = status;
+    }
+    if (badgeEl && count > 0) {
+      badgeEl.textContent = count;
+      badgeEl.style.display = "block";
+    } else if (badgeEl) {
+      badgeEl.style.display = "none";
+    }
+  }
+
   function setGuestMode() {
     document.querySelector(".welcome-text h1 span").textContent = "Guest";
     document.querySelector(".loan-balance-amount").textContent = "UGX 0";
@@ -147,6 +181,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderLoans(loans);
     renderNotifications(notifications);
 
+    let statusMessage = "Checking your loan application status…";
+    if (activeLoans.length > 0) {
+      const firstLoan = activeLoans[0];
+      statusMessage = `Loan ${firstLoan.application_code}: ${firstLoan.status.replace(/_/g, " ")} • ${formatCurrency(firstLoan.amount)}`;
+    } else if (loans.length > 0) {
+      statusMessage = `${loans.length} loan(s) in history • Ready for new application`;
+    }
+    updateLiveStatusFAB(statusMessage, notifications.filter((n) => !n.read_at).length);
+
     document.querySelectorAll('[data-action="open-login"]').forEach((item) => {
       const labelNode = item.querySelector("span");
       if (labelNode) {
@@ -181,23 +224,94 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   navLinks.forEach((link) => {
     link.addEventListener("click", (event) => {
-      if (!link.dataset.view) {
+      const action = link.dataset.action;
+      const view = link.dataset.view;
+
+      if (action === "open-contact") {
+        event.preventDefault();
+        openContactModal();
         return;
       }
+
+      if (!view) {
+        return;
+      }
+
+      if (view !== "overview" && !isAuthenticated()) {
+        event.preventDefault();
+        openModal(false);
+        return;
+      }
+
       event.preventDefault();
-      setActiveView(link.dataset.view);
+      setActiveView(view);
+    });
+  });
+
+  document.querySelectorAll(".dashboard-sidebar .menu-item").forEach((item) => {
+    item.addEventListener("click", (event) => {
+      const view = item.dataset.view;
+      const action = item.dataset.action;
+
+      if (action === "open-contact") {
+        event.preventDefault();
+        closeSidebar();
+        openContactModal();
+        return;
+      }
+
+      if (action === "open-login") {
+        event.preventDefault();
+        closeSidebar();
+        openModal(false);
+        return;
+      }
+
+      if (view) {
+        if (view !== "overview" && !isAuthenticated()) {
+          event.preventDefault();
+          closeSidebar();
+          openModal(false);
+          return;
+        }
+
+        event.preventDefault();
+        closeSidebar();
+        setActiveView(view);
+      }
     });
   });
 
   document.querySelector(".btn-apply-now")?.addEventListener("click", () => {
+    if (!isAuthenticated()) {
+      openModal(false);
+      return;
+    }
     setActiveView("get-loan");
   });
   document.querySelector(".refresh-btn")?.addEventListener("click", () => loadDashboard(true));
-  document.querySelectorAll('[data-quick-box="active"]').forEach((button) => button.addEventListener("click", () => setActiveView("loans")));
-  document.querySelectorAll('[data-quick-box="repay"]').forEach((button) => button.addEventListener("click", () => setActiveView("repay")));
+  document.querySelectorAll('[data-quick-box="active"]').forEach((button) => button.addEventListener("click", () => {
+    if (!isAuthenticated()) {
+      openModal(false);
+      return;
+    }
+    setActiveView("loans");
+  }));
+  document.querySelectorAll('[data-quick-box="repay"]').forEach((button) => button.addEventListener("click", () => {
+    if (!isAuthenticated()) {
+      openModal(false);
+      return;
+    }
+    setActiveView("repay");
+  }));
   document.querySelectorAll('[data-action="open-login"]').forEach((button) => button.addEventListener("click", (event) => {
     event.preventDefault();
     openModal(false);
+  }));
+  document.querySelectorAll('[data-action="open-contact"]').forEach((button) => button.addEventListener("click", (event) => {
+    event.preventDefault();
+    closeSidebar();
+    openContactModal();
   }));
   modal?.querySelector(".modal-close")?.addEventListener("click", closeModal);
   modal?.addEventListener("click", (event) => {
@@ -210,18 +324,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   const footerBoxes = document.querySelectorAll(".footer-box");
   if (footerBoxes.length > 0) {
     footerBoxes[0]?.addEventListener("click", () => {
-      const sidebarOverlay = document.querySelector(".sidebar-overlay");
-      const dashboardSidebar = document.querySelector(".dashboard-sidebar");
       sidebarOverlay?.classList.toggle("active");
       dashboardSidebar?.classList.toggle("active");
     });
-    footerBoxes[1]?.addEventListener("click", () => setActiveView("loans"));
+    footerBoxes[1]?.addEventListener("click", () => {
+      if (!isAuthenticated()) {
+        openModal(false);
+        return;
+      }
+      setActiveView("loans");
+    });
     footerBoxes[2]?.addEventListener("click", () => setActiveView("overview"));
     footerBoxes[3]?.addEventListener("click", () => {
-      const contactModal = document.querySelector(".contact-modal-overlay");
-      contactModal?.classList.toggle("active");
+      const chatContainer = document.querySelector(".chat-container");
+      chatContainer?.classList.toggle("active");
     });
     footerBoxes[4]?.addEventListener("click", () => {
+      if (!isAuthenticated()) {
+        openModal(false);
+        return;
+      }
       const profilePanel = document.querySelector(".profile-panel");
       const profileOverlay = document.createElement("div");
       profileOverlay.className = "profile-panel-overlay";
@@ -237,6 +359,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const notificationButtons = document.querySelectorAll(".header-actions .icon-btn");
   if (notificationButtons.length > 0) {
     notificationButtons[1]?.addEventListener("click", () => {
+      if (!isAuthenticated()) {
+        openModal(false);
+        return;
+      }
       document.querySelector(".notification-panel")?.classList.toggle("active");
     });
   }
@@ -277,6 +403,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector(".contact-modal-overlay")?.addEventListener("click", (e) => {
     if (e.target.classList.contains("contact-modal-overlay")) {
       document.querySelector(".contact-modal-overlay")?.classList.remove("active");
+    }
+  });
+
+  // Live status FAB click handler
+  document.querySelector(".live-status-fab")?.addEventListener("click", () => {
+    const activeView = document.querySelector(".view-section.active");
+    if (activeView?.id === "overview-view") {
+      window.CraneNotify.info("Status updated. Check your loan details below.");
+    } else {
+      setActiveView("overview");
+      window.CraneNotify.info("Loading your loan status...");
     }
   });
 
