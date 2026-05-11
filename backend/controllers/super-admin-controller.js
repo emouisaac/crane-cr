@@ -8,6 +8,7 @@ const { createNotification } = require("../services/notification-service");
 const { revokeAllSessionsForAccount } = require("../services/auth-service");
 const { emitToAccount, emitToRole } = require("../services/socket-bus");
 const { logAuditEvent } = require("../services/audit-service");
+const { AppError } = require("../utils/errors");
 const { normalizeEmail, normalizePhone, requiredText, sanitizeNullableString, validatePin } = require("../utils/validators");
 const { getIpAddress } = require("../utils/http");
 
@@ -40,6 +41,11 @@ async function dashboard(req, res) {
 }
 
 async function createAdmin(req, res) {
+  const role = String(req.body.role || "admin").trim().toLowerCase();
+  if (role !== "admin") {
+    throw new AppError(400, "Role must be admin.");
+  }
+
   const username = requiredText(req.body.username, "Username").toLowerCase();
   const fullName = requiredText(req.body.fullName, "Full name");
   const pinHash = await bcrypt.hash(validatePin(req.body.pin), 12);
@@ -47,12 +53,43 @@ async function createAdmin(req, res) {
   const email = req.body.email ? normalizeEmail(req.body.email) : null;
   const phone = req.body.phone ? normalizePhone(req.body.phone) : null;
 
-  const result = await query(
-    `INSERT INTO accounts (role, full_name, username, email, phone, pin_hash, permissions, verification_status)
-     VALUES ('admin', $1, $2, $3, $4, $5, $6, 'verified')
-     RETURNING id, role, full_name, username, email, phone, status, permissions, created_at`,
-    [fullName, username, email, phone, pinHash, JSON.stringify(permissions)]
+  const duplicate = await query(
+    `SELECT username, email, phone
+     FROM accounts
+     WHERE username = $1
+        OR ($2::text IS NOT NULL AND email = $2)
+        OR ($3::text IS NOT NULL AND phone = $3)
+     LIMIT 1`,
+    [username, email, phone]
   );
+  if (duplicate.rowCount > 0) {
+    const existing = duplicate.rows[0];
+    if (existing.username === username) {
+      throw new AppError(409, "That username is already in use.");
+    }
+    if (email && existing.email === email) {
+      throw new AppError(409, "That email address is already in use.");
+    }
+    if (phone && existing.phone === phone) {
+      throw new AppError(409, "That phone number is already in use.");
+    }
+    throw new AppError(409, "An account already exists with those details.");
+  }
+
+  let result;
+  try {
+    result = await query(
+      `INSERT INTO accounts (role, full_name, username, email, phone, pin_hash, permissions, verification_status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'verified')
+       RETURNING id, role, full_name, username, email, phone, status, permissions, created_at`,
+      [role, fullName, username, email, phone, pinHash, JSON.stringify(permissions)]
+    );
+  } catch (error) {
+    if (error.code === "23505") {
+      throw new AppError(409, "That username, email, or phone number is already in use.");
+    }
+    throw error;
+  }
 
   await createNotification({
     audienceRole: "super_admin",

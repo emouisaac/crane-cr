@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function openContactModal() {
-    contactModal?.classList.toggle("active");
+    contactModal?.classList.add("active");
   }
 
   function updateLiveStatusFAB(status, count = 0) {
@@ -209,6 +209,142 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  function renderProfile(account, dashboardData = null) {
+    // Update profile header
+    const profileAvatar = document.querySelector(".profile-avatar");
+    if (profileAvatar) {
+      profileAvatar.textContent = account.fullName?.charAt(0)?.toUpperCase() || "U";
+    }
+
+    const profileTitle = document.querySelector(".profile-title-row h4");
+    if (profileTitle) {
+      profileTitle.textContent = account.fullName || "User";
+    }
+
+    const profileStatus = document.querySelector(".profile-status-badge");
+    if (profileStatus) {
+      profileStatus.textContent = account.verificationStatus === "verified" ? "Verified" : "Unverified";
+      profileStatus.className = `profile-status-badge ${account.verificationStatus === "verified" ? "verified" : "unverified"}`;
+    }
+
+    const profileSecondary = document.querySelector(".profile-secondary-text");
+    if (profileSecondary) {
+      const regDate = account.profile?.registrationDate
+        ? new Date(account.profile.registrationDate).toLocaleDateString()
+        : account.createdAt
+        ? new Date(account.createdAt).toLocaleDateString()
+        : "Unknown";
+      profileSecondary.textContent = `Member since ${regDate}`;
+    }
+
+    // Update phone number in profile header
+    const profilePhone = document.querySelector(".profile-info p:not(.profile-secondary-text)");
+    if (profilePhone) {
+      const phoneNumber = account.phone || account.profile?.phone;
+      profilePhone.textContent = phoneNumber ? phoneNumber : "Phone not available";
+    }
+
+    // Update profile summary grid
+    const customerIdField = document.querySelectorAll(".profile-summary-card strong")[0];
+    if (customerIdField) {
+      customerIdField.textContent = account.id?.substring(0, 8) || "--";
+    }
+
+    const memberSinceField = document.querySelectorAll(".profile-summary-card strong")[1];
+    if (memberSinceField) {
+      const regDate = account.profile?.registrationDate
+        ? new Date(account.profile.registrationDate).toLocaleDateString()
+        : account.createdAt
+        ? new Date(account.createdAt).toLocaleDateString()
+        : "--";
+      memberSinceField.textContent = regDate;
+    }
+
+    const creditScoreField = document.querySelectorAll(".profile-summary-card strong")[2];
+    if (creditScoreField && dashboardData) {
+      const loans = dashboardData.loans || [];
+      const activeLoans = loans.filter((loan) => ["submitted", "under_review", "verification", "approved", "disbursed"].includes(loan.status));
+      const scoreValue = Math.min(760, 520 + activeLoans.length * 28 + (account.verificationStatus === "verified" ? 70 : 0));
+      creditScoreField.textContent = String(scoreValue);
+    }
+
+    // Update profile fields
+    const phoneField = document.querySelector(".profile-field-card .value");
+    if (phoneField) {
+      phoneField.textContent = account.phone || account.profile?.phone || "Not provided";
+    }
+
+    const emailField = document.querySelectorAll(".profile-field-card .value")[1];
+    if (emailField) {
+      emailField.textContent = account.email || account.profile?.email || "Not provided";
+    }
+
+    const statusField = document.querySelectorAll(".profile-field-card .value")[2];
+    if (statusField) {
+      statusField.textContent = account.status.charAt(0).toUpperCase() + account.status.slice(1);
+    }
+
+    const lastLoginField = document.querySelectorAll(".profile-field-card .value")[3];
+    if (lastLoginField) {
+      if (account.lastLoginAt) {
+        lastLoginField.textContent = new Date(account.lastLoginAt).toLocaleDateString();
+      } else {
+        lastLoginField.textContent = "Never";
+      }
+    }
+
+    // Add loan summary information if dashboard data is available
+    if (dashboardData) {
+      const loans = dashboardData.loans || [];
+      const activeLoans = loans.filter((loan) => ["submitted", "under_review", "verification", "approved", "disbursed"].includes(loan.status));
+      const totalLoans = loans.length;
+      const outstandingBalance = dashboardData.summary?.outstandingBalance || 0;
+
+      // Update or add loan summary section
+      let loanSummarySection = document.querySelector(".loan-summary-section");
+      if (!loanSummarySection) {
+        loanSummarySection = document.createElement("div");
+        loanSummarySection.className = "profile-section loan-summary-section";
+        loanSummarySection.innerHTML = `
+          <h5>Loan Summary</h5>
+          <div class="profile-field-grid">
+            <div class="profile-field-card">
+              <span class="label">Active Loans</span>
+              <span class="value">${activeLoans.length}</span>
+            </div>
+            <div class="profile-field-card">
+              <span class="label">Total Loans</span>
+              <span class="value">${totalLoans}</span>
+            </div>
+            <div class="profile-field-card">
+              <span class="label">Outstanding Balance</span>
+              <span class="value">${formatCurrency(outstandingBalance)}</span>
+            </div>
+            <div class="profile-field-card">
+              <span class="label">Unread Notifications</span>
+              <span class="value">${dashboardData.summary?.unreadNotifications || 0}</span>
+            </div>
+          </div>
+        `;
+        const supportSection = document.querySelector(".profile-section:last-of-type");
+        if (supportSection) {
+          supportSection.parentNode.insertBefore(loanSummarySection, supportSection);
+        }
+      } else {
+        // Update existing values
+        const activeLoansField = loanSummarySection.querySelectorAll(".value")[0];
+        const totalLoansField = loanSummarySection.querySelectorAll(".value")[1];
+        const balanceField = loanSummarySection.querySelectorAll(".value")[2];
+        const notificationsField = loanSummarySection.querySelectorAll(".value")[3];
+
+        if (activeLoansField) activeLoansField.textContent = activeLoans.length;
+        if (totalLoansField) totalLoansField.textContent = totalLoans;
+        if (balanceField) balanceField.textContent = formatCurrency(outstandingBalance);
+        if (notificationsField) notificationsField.textContent = dashboardData.summary?.unreadNotifications || 0;
+      }
+    }
+  }
+
   async function loadDashboard(showToast = false) {
     const account = window.CraneAuth.getAccount();
     if (!account || account.role !== "user") {
@@ -217,6 +353,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     dashboardData = await window.CraneApi.userDashboard();
     renderOverview(dashboardData);
+    renderProfile(account, dashboardData);
     if (showToast) {
       window.CraneNotify.success("Dashboard refreshed.");
     }
@@ -353,6 +490,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       profilePanel?.classList.toggle("active");
       document.querySelector(".profile-panel-overlay")?.classList.toggle("active");
     });
+
+    document.querySelector(".chat-close-btn")?.addEventListener("click", () => {
+      document.querySelector(".chat-container")?.classList.remove("active");
+    });
   }
 
   // Header notification button
@@ -397,6 +538,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector(".profile-panel .close-btn")?.addEventListener("click", () => {
     document.querySelector(".profile-panel")?.classList.remove("active");
     document.querySelector(".profile-panel-overlay")?.classList.remove("active");
+  });
+
+  // Profile menu item handlers
+  document.addEventListener("click", (event) => {
+    const menuItem = event.target.closest(".profile-menu-item");
+    if (!menuItem) return;
+
+    const action = menuItem.querySelector("span")?.textContent?.toLowerCase();
+
+    switch (action) {
+      case "change pin":
+        window.CraneNotify.info("PIN change feature coming soon");
+        break;
+      case "security settings":
+        window.CraneNotify.info("Security settings feature coming soon");
+        break;
+      case "notification preferences":
+        window.CraneNotify.info("Notification preferences feature coming soon");
+        break;
+      case "help & support":
+        // Open contact modal
+        document.querySelector(".contact-modal-overlay")?.classList.add("active");
+        document.querySelector(".profile-panel")?.classList.remove("active");
+        document.querySelector(".profile-panel-overlay")?.classList.remove("active");
+        break;
+      case "terms & conditions":
+        window.CraneNotify.info("Terms & conditions feature coming soon");
+        break;
+      default:
+        break;
+    }
   });
 
   // Contact modal close on overlay click

@@ -4,143 +4,608 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="crane-api-base" content="">
-  <title>Crane Credit | Admin Workspace</title>
+  <title>Crane Credit | Admin Dashboard</title>
+  <meta name="description" content="Admin workspace for loan application management and verification">
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="icon" href="img/Crane Credit.png" type="image/png">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="icon" href="img/Crane Credit.png" type="image/png">
   <link rel="stylesheet" href="styles.css">
-  <style>
-    body.admin-workspace { margin: 0; font-family: 'Manrope', sans-serif; background: #f3f7fb; color: #132238; }
-    .workspace-shell { max-width: 1440px; margin: 0 auto; padding: 28px 20px 48px; }
-    .workspace-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
-    .workspace-title h1 { margin: 0; font: 700 34px/1 'Space Grotesk', sans-serif; }
-    .workspace-title p { margin: 10px 0 0; color: #5f6f82; }
-    .workspace-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .summary-card, .panel { background: #fff; border-radius: 22px; box-shadow: 0 18px 45px rgba(18, 35, 56, 0.08); padding: 22px; }
-    .summary-card span { display: block; color: #6c7b8d; font-size: 13px; margin-bottom: 8px; }
-    .summary-card strong { font-size: 32px; font-weight: 800; }
-    .workspace-grid { display: grid; grid-template-columns: 1.45fr .95fr; gap: 20px; }
-    .panel h2 { margin: 0 0 16px; font-size: 20px; }
-    .muted { color: #64748b; }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .applications-list, .notifications-list, .detail-documents, .detail-comments, .users-list { display: grid; gap: 12px; }
-    .application-item, .notification-item, .document-item, .comment-item, .user-item { border: 1px solid #e3ebf4; border-radius: 18px; padding: 16px; background: #f9fbfd; }
-    .application-item.active { border-color: #2857c5; background: #eef4ff; }
-    .row-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
-    .status-chip { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 700; text-transform: capitalize; }
-    .status-chip.warning { background: #fef3c7; color: #b45309; }
-    .status-chip.success { background: #dcfce7; color: #15803d; }
-    .status-chip.danger { background: #fee2e2; color: #b91c1c; }
-    .mini-meta { margin-top: 10px; color: #64748b; font-size: 13px; display: flex; gap: 14px; flex-wrap: wrap; }
-    .detail-grid { display: grid; gap: 18px; }
-    .detail-block { border: 1px solid #e3ebf4; border-radius: 18px; padding: 16px; }
-    .detail-block h3 { margin: 0 0 12px; font-size: 16px; }
-    .detail-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; font-size: 14px; }
-    .detail-meta strong { display: block; color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
-    .action-row, .document-actions, .user-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-    .admin-note-form textarea, .request-documents-form textarea { width: 100%; min-height: 100px; border: 1px solid #d5dfeb; border-radius: 14px; padding: 12px 14px; font: inherit; resize: vertical; }
-    button.workspace-btn { border: none; border-radius: 14px; padding: 12px 16px; font: 700 14px/1 'Manrope', sans-serif; cursor: pointer; }
-    .primary { background: #1d4ed8; color: #fff; }
-    .secondary { background: #e8eef7; color: #173250; }
-    .danger { background: #b91c1c; color: #fff; }
-    .ghost { background: transparent; border: 1px solid #d7e0ea; color: #173250; }
-    @media (max-width: 1100px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .workspace-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 640px) { .summary-grid { grid-template-columns: 1fr; } .workspace-header, .panel-header, .row-head { flex-direction: column; align-items: start; } .detail-meta { grid-template-columns: 1fr; } }
-  </style>
 </head>
-<body class="admin-workspace">
-  <div class="workspace-shell">
-    <header class="workspace-header">
-      <div class="workspace-title">
-        <h1>Admin Workspace</h1>
-        <p>Review loan applications, verify documents, and keep borrower updates moving in real time.</p>
-      </div>
-      <div class="workspace-actions">
-        <button type="button" class="workspace-btn secondary" id="admin-refresh-btn">Refresh</button>
-        <button type="button" class="workspace-btn ghost" id="admin-logout-btn">Logout</button>
+<body class="intro-loading role-dashboard-page admin-dashboard-page">
+  <div class="site-intro" aria-hidden="true">
+    <img src="img/black crane.png" alt="Crane logo" class="site-intro-logo">
+  </div>
+
+  <div class="page-glow page-glow-left"></div>
+  <div class="page-glow page-glow-right"></div>
+
+  <div class="app-shell">
+    <!-- Header Navigation -->
+    <header class="dashboard-header">
+      <button type="button" class="header-brand" aria-label="Go to home">
+        <div class="logo-icon"><img src="img/black crane.png" alt=""></div>
+        <span>Crane Credit | Admin</span>
+      </button>
+      <nav class="header-nav">
+        <a href="#" class="nav-link active" data-view="overview">Dashboard</a>
+        <a href="#" class="nav-link" data-view="applications">Applications</a>
+        <a href="#" class="nav-link" data-view="borrowers">Borrowers</a>
+        <a href="#" class="nav-link" data-view="documents">Documents</a>
+        <a href="#" class="nav-link" data-action="open-contact">Support</a>
+        <a href="#" class="nav-link" data-action="open-login">Logout</a>
+      </nav>
+      <div class="header-actions">
+        <button type="button" class="mobile-search-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+        <button type="button" class="icon-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-badge">0</span>
+        </button>
       </div>
     </header>
 
-    <section class="summary-grid">
-      <article class="summary-card"><span>Total applications</span><strong id="summary-total-applications">0</strong></article>
-      <article class="summary-card"><span>Pending review</span><strong id="summary-pending-review">0</strong></article>
-      <article class="summary-card"><span>Approved today</span><strong id="summary-approved-today">0</strong></article>
-      <article class="summary-card"><span>Active users</span><strong id="summary-active-users">0</strong></article>
-    </section>
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
 
-    <section class="workspace-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Applications</h2>
-          <span id="admin-session-name"></span>
-        </div>
-        <div class="applications-list" id="applications-list"></div>
+    <!-- Dashboard Sidebar (for mobile) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon"><img src="img/black crane.png" alt=""></div>
+        <span>Crane Credit | Admin</span>
       </div>
+      <nav class="sidebar-menu">
+        <a href="#" class="menu-item active" data-view="overview">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="menu-item" data-view="applications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+          </svg>
+          <span>Applications</span>
+        </a>
+        <a href="#" class="menu-item" data-view="borrowers">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span>Borrowers</span>
+        </a>
+        <a href="#" class="menu-item" data-view="documents">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Documents</span>
+        </a>
+        <a href="#" class="menu-item" data-action="open-contact">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13"></path>
+            <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+          </svg>
+          <span>Support</span>
+        </a>
+        <a href="#" class="menu-item" data-action="open-login">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <path d="M10 17l5-5-5-5"></path>
+            <path d="M15 12H3"></path>
+          </svg>
+          <span>Logout</span>
+        </a>
+      </nav>
+    </aside>
 
-      <div class="detail-grid">
-        <div class="panel">
-          <h2>Application Detail</h2>
-          <div id="application-detail-empty">Select a loan application to inspect documents, timeline, and next actions.</div>
-          <div id="application-detail" hidden>
-            <div class="detail-block">
-              <div class="row-head">
+    <main class="dashboard-content">
+      <section class="view-section active">
+        <div class="dashboard-grid role-dashboard-grid">
+          <article class="welcome-header-card role-span-full">
+            <div class="welcome-text">
+              <h1>Welcome, <span id="admin-welcome-name">Admin</span></h1>
+              <p class="role-welcome-copy">Review applications, verify documents, and keep borrower updates moving in real time.</p>
+            </div>
+            <button type="button" id="admin-refresh-btn" class="refresh-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"></path>
+                <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"></path>
+              </svg>
+              <span>Refresh</span>
+            </button>
+          </article>
+
+          <article class="card first-section-card role-span-full">
+            <div class="section-content role-hero-content">
+              <canvas class="section-wave-canvas" aria-hidden="true"></canvas>
+              <img src="img/black crane.png" alt="Black crane" class="section-corner-image">
+              <div class="role-hero-copy">
+                <span class="role-kicker">Operations queue</span>
+                <h2>Borrower reviews are live across the platform</h2>
+                <p id="admin-session-name">Admin session</p>
+              </div>
+              <div class="loan-balance-container">
+                <div class="loan-balance-label">Pending review</div>
+                <div class="loan-balance-amount" data-admin-pending-review>0</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card second-section-card role-span-full">
+            <div class="account-snapshot role-snapshot-stack">
+              <div class="snapshot-hero">
                 <div>
-                  <h3 id="detail-title">Application</h3>
-                  <p id="detail-subtitle"></p>
+                  <span class="snapshot-kicker">Admin snapshot</span>
+                  <h2 id="admin-overview-title">No applications require action yet</h2>
+                  <p id="admin-overview-message">New applications, status changes, and borrower document updates will surface here immediately.</p>
                 </div>
-                <span class="status-chip" id="detail-status">Submitted</span>
+                <span class="snapshot-badge" id="admin-overview-badge">Monitoring queue</span>
               </div>
-              <div class="detail-meta" id="detail-meta"></div>
-              <div class="action-row">
-                <button type="button" class="workspace-btn secondary" data-status-action="under_review">Move To Review</button>
-                <button type="button" class="workspace-btn secondary" data-status-action="verification">Verification</button>
-                <button type="button" class="workspace-btn primary" data-status-action="approved">Approve</button>
-                <button type="button" class="workspace-btn secondary" data-status-action="disbursed">Disburse</button>
-                <button type="button" class="workspace-btn danger" data-status-action="rejected">Reject</button>
+              <div class="snapshot-grid">
+                <div class="snapshot-item">
+                  <span class="snapshot-label">Total applications</span>
+                  <strong data-admin-total-applications>0</strong>
+                </div>
+                <div class="snapshot-item">
+                  <span class="snapshot-label">Pending review</span>
+                  <strong data-admin-pending-review>0</strong>
+                </div>
+                <div class="snapshot-item">
+                  <span class="snapshot-label">Approved today</span>
+                  <strong data-admin-approved-today>0</strong>
+                </div>
+                <div class="snapshot-item">
+                  <span class="snapshot-label">Active users</span>
+                  <strong data-admin-active-users>0</strong>
+                </div>
               </div>
             </div>
+          </article>
 
-            <div class="detail-block">
-              <h3>Verification Documents</h3>
-              <div class="detail-documents" id="detail-documents"></div>
-            </div>
-
-            <div class="detail-block">
-              <h3>Request Additional Documents</h3>
-              <form class="request-documents-form" id="request-documents-form">
-                <textarea name="message" placeholder="Explain exactly what the borrower should re-upload or clarify."></textarea>
-                <div class="action-row">
-                  <button type="submit" class="workspace-btn secondary">Send Request</button>
+          <article class="card three-flex-card role-span-full">
+            <div class="flex-row">
+              <button type="button" class="flex-box" data-view-trigger="applications" aria-label="Open applications workspace">
+                <div class="flex-box-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                    <polyline points="13 2 13 9 20 9"></polyline>
+                  </svg>
                 </div>
-              </form>
-            </div>
-
-            <div class="detail-block">
-              <h3>Internal Notes</h3>
-              <form class="admin-note-form" id="admin-note-form">
-                <textarea name="message" placeholder="Add an internal review note for the operations trail."></textarea>
-                <div class="action-row">
-                  <button type="submit" class="workspace-btn ghost">Save Note</button>
+                <div class="flex-box-content">
+                  <span class="flex-box-label">Applications</span>
+                  <strong class="flex-box-value" data-admin-total-applications>0</strong>
                 </div>
-              </form>
-              <div class="detail-comments" id="detail-comments"></div>
+              </button>
+              <button type="button" class="flex-box" data-view-trigger="borrowers" aria-label="Open borrowers workspace">
+                <div class="flex-box-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+                <div class="flex-box-content">
+                  <span class="flex-box-label">Borrowers</span>
+                  <strong class="flex-box-value" data-admin-active-users>0</strong>
+                </div>
+              </button>
+              <button type="button" class="flex-box" data-view-trigger="documents" aria-label="Open document review workspace">
+                <div class="flex-box-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </div>
+                <div class="flex-box-content">
+                  <span class="flex-box-label">Documents</span>
+                  <strong class="flex-box-value" id="admin-selected-loan-label">Awaiting selection</strong>
+                </div>
+              </button>
+            </div>
+          </article>
+
+          <article class="card role-span-7">
+            <div class="section-heading">
+              <div>
+                <h2>Queue preview</h2>
+                <p class="section-subtitle">The latest borrower applications waiting on your review.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="applications-preview-list"></div>
+          </article>
+
+          <article class="card role-span-5">
+            <div class="section-heading">
+              <div>
+                <h2>Live updates</h2>
+                <p class="section-subtitle">Notifications from borrower and document activity.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="admin-overview-activity-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid role-dashboard-grid">
+          <article class="card loan-request-intro-card role-span-full">
+            <div class="section-heading">
+              <div>
+                <h2>Application review workspace</h2>
+                <p class="section-subtitle">Select a live application, update status, and keep the borrower journey moving.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="card role-span-5">
+            <div class="section-heading">
+              <div>
+                <h2>Loan applications</h2>
+                <p class="section-subtitle">Newest applications stay at the top of the review queue.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="applications-list"></div>
+          </article>
+
+          <article class="card role-span-7">
+            <div class="section-heading">
+              <div>
+                <h2>Application details</h2>
+                <p class="section-subtitle">Review the borrower profile, risk clues, and workflow actions.</p>
+              </div>
+            </div>
+            <div class="panel-empty-state" id="application-detail-empty">Select a loan application to review documents, timeline, and take action.</div>
+            <div id="application-detail" hidden>
+              <div class="role-detail-card">
+                <div class="role-detail-header">
+                  <div>
+                    <h3 id="detail-title">Application</h3>
+                    <p id="detail-subtitle">Choose an item from the queue.</p>
+                  </div>
+                  <span class="role-status-badge" id="detail-status">Submitted</span>
+                </div>
+                <div class="role-meta-grid" id="detail-meta"></div>
+                <div class="role-action-row">
+                  <button type="button" class="button button-secondary role-action-button" data-status-action="under_review">Move To Review</button>
+                  <button type="button" class="button button-secondary role-action-button" data-status-action="verification">Verification</button>
+                  <button type="button" class="button button-primary role-action-button" data-status-action="approved">Approve</button>
+                  <button type="button" class="button button-secondary role-action-button" data-status-action="disbursed">Disburse</button>
+                  <button type="button" class="button role-action-button role-action-danger" data-status-action="rejected">Reject</button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid role-dashboard-grid">
+          <article class="card loan-request-intro-card role-span-full">
+            <div class="section-heading">
+              <div>
+                <h2>Borrower relationships</h2>
+                <p class="section-subtitle">See who is active on the platform and track the alerts tied to their applications.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="card role-span-7">
+            <div class="section-heading">
+              <div>
+                <h2>Borrowers</h2>
+                <p class="section-subtitle">Customer activity and account status across the pipeline.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="admin-users-list"></div>
+          </article>
+
+          <article class="card role-span-5">
+            <div class="section-heading">
+              <div>
+                <h2>Notifications</h2>
+                <p class="section-subtitle">Messages and events affecting the admin desk right now.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="admin-notifications-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid role-dashboard-grid">
+          <article class="card loan-request-intro-card role-span-full">
+            <div class="section-heading">
+              <div>
+                <h2>Document review center</h2>
+                <p class="section-subtitle" id="admin-documents-context">Select an application first to review uploads, request corrections, and leave an internal trail.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="card role-span-7">
+            <div class="section-heading">
+              <div>
+                <h2>Verification documents</h2>
+                <p class="section-subtitle">Open each upload, verify quality, or reject it with a clear note.</p>
+              </div>
+            </div>
+            <div class="panel-empty-state" id="documents-empty-state">Choose an application from the Applications view to load its documents here.</div>
+            <div class="role-data-list" id="detail-documents"></div>
+          </article>
+
+          <article class="card role-span-5">
+            <div class="section-heading">
+              <div>
+                <h2>Request documents</h2>
+                <p class="section-subtitle">Tell the borrower exactly what needs to be re-uploaded or clarified.</p>
+              </div>
+            </div>
+            <form class="role-form-stack" id="request-documents-form">
+              <label for="admin-request-documents-message">Message</label>
+              <textarea id="admin-request-documents-message" name="message" placeholder="Explain exactly what the borrower should re-upload or clarify."></textarea>
+              <button type="submit" class="button button-secondary">Send Request</button>
+            </form>
+          </article>
+
+          <article class="card role-span-full">
+            <div class="section-heading">
+              <div>
+                <h2>Internal notes</h2>
+                <p class="section-subtitle">Keep a clear operations trail for future admin and super admin follow-up.</p>
+              </div>
+            </div>
+            <form class="role-form-stack role-form-inline" id="admin-note-form">
+              <label for="admin-note-message">Note</label>
+              <textarea id="admin-note-message" name="message" placeholder="Add an internal review note for the operations trail."></textarea>
+              <button type="submit" class="button button-secondary">Save Note</button>
+            </form>
+            <div class="role-data-list" id="detail-comments"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Contact Modal -->
+      <div class="contact-modal-overlay">
+        <div class="contact-modal">
+          <div class="contact-modal-header">
+            <h2>Contact Crane Credit Support</h2>
+            <button type="button" class="contact-modal-close">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="contact-modal-body">
+            <p class="contact-modal-intro">Get in touch with our support team. Choose your preferred method:</p>
+            <div class="contact-options">
+              <button type="button" class="contact-option call-option">
+                <div class="contact-option-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                </div>
+                <div class="contact-option-content">
+                  <h3>Call Now</h3>
+                  <p>+256 788 408 032</p>
+                </div>
+                <div class="contact-option-arrow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+              <button type="button" class="contact-option whatsapp-option">
+                <div class="contact-option-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </div>
+                <div class="contact-option-content">
+                  <h3>WhatsApp Chat</h3>
+                  <p>+256 788 408 032</p>
+                </div>
+                <div class="contact-option-arrow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+              <button type="button" class="contact-option email-option">
+                <div class="contact-option-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                </div>
+                <div class="contact-option-content">
+                  <h3>Email Support</h3>
+                  <p>support@craneloans.com</p>
+                </div>
+                <div class="contact-option-arrow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+            </div>
+            <div class="contact-support-hours">
+              <p><strong>Support Hours:</strong> Monday - Friday, 8:00 AM - 6:00 PM (EAT)</p>
             </div>
           </div>
         </div>
+      </div>
+    </main>
 
-        <div class="panel">
-          <h2>Borrowers</h2>
-          <div class="users-list" id="users-list"></div>
+    <!-- Fixed Footer -->
+    <footer class="footer-card">
+      <div class="footer-grid">
+        <button type="button" class="footer-box" aria-label="Open navigation menu" aria-expanded="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="4" y1="6" x2="20" y2="6"></line>
+            <line x1="4" y1="12" x2="20" y2="12"></line>
+            <line x1="4" y1="18" x2="20" y2="18"></line>
+          </svg>
+        </button>
+        <button type="button" class="footer-box" aria-label="Applications" data-view-trigger="applications">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+          </svg>
+        </button>
+        <button type="button" class="footer-box home-nav-btn" aria-label="Home" data-view-trigger="overview">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 10.5 12 3l9 7.5"></path>
+            <path d="M5 9.5V21h14V9.5"></path>
+          </svg>
+        </button>
+        <button type="button" class="footer-box" aria-label="Borrowers" data-view-trigger="borrowers">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </button>
+        <button type="button" class="footer-box" aria-label="Profile" data-action="open-profile">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4 21a8 8 0 0 1 16 0"></path>
+          </svg>
+        </button>
+      </div>
+    </footer>
+
+    <!-- Notification Panel (Slide-out) -->
+    <div class="notification-panel">
+      <div class="panel-header">
+        <h3>Notifications</h3>
+        <button type="button" class="close-btn">&times;</button>
+      </div>
+      <div class="panel-content notifications-list">
+        <div class="panel-empty-state">No notifications yet. New account alerts will appear here.</div>
+      </div>
+    </div>
+
+    <button type="button" class="live-status-fab" aria-label="Live application updates" aria-live="polite">
+      <span class="live-status-indicator">
+        <span class="live-dot"></span>
+        LIVE
+      </span>
+      <span class="live-status-title">Checking for new applications...</span>
+      <span class="live-status-badge" style="display:none;">0</span>
+    </button>
+
+    <div class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Confirm Action</h3>
+          <button type="button" class="close-btn">&times;</button>
         </div>
-
-        <div class="panel">
-          <h2>Live Notifications</h2>
-          <div class="notifications-list" id="admin-notifications-list"></div>
+        <div class="modal-body">
+          <div id="admin-modal-body"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="button button-secondary">Cancel</button>
+          <button type="button" class="button button-primary">Confirm</button>
         </div>
       </div>
-    </section>
+    </div>
+  </div>
+
+  <!-- User Profile Panel (Slide-out) -->
+  <div class="profile-panel">
+    <div class="panel-header">
+      <h3>Profile</h3>
+      <button type="button" class="close-btn">&times;</button>
+    </div>
+    <div class="panel-content profile-panel-content">
+      <div class="profile-header-card">
+        <div class="profile-header">
+          <div class="profile-avatar"><strong>A</strong></div>
+          <div class="profile-info">
+            <div class="profile-title-row">
+              <h3>Admin Account</h3>
+              <span class="profile-status-badge verified">Admin</span>
+            </div>
+            <p class="profile-secondary-text">Loan operations management</p>
+          </div>
+        </div>
+        <div class="profile-summary-grid">
+          <div class="profile-summary-card">
+            <span>Role</span>
+            <strong>Admin</strong>
+          </div>
+          <div class="profile-summary-card">
+            <span>Status</span>
+            <strong>Active</strong>
+          </div>
+          <div class="profile-summary-card">
+            <span>Applications Reviewed</span>
+            <strong id="admin-reviewed-count">0</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section profile-data-section">
+        <h5>Account Information</h5>
+        <div class="profile-field-grid">
+          <div class="profile-field">
+            <span>Email</span>
+            <p id="admin-profile-email">Not available</p>
+          </div>
+          <div class="profile-field">
+            <span>Phone</span>
+            <p id="admin-profile-phone">Not available</p>
+          </div>
+          <div class="profile-field">
+            <span>Account Status</span>
+            <p>Active</p>
+          </div>
+          <div class="profile-field">
+            <span>Last Login</span>
+            <p id="admin-last-login">Never</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h5>Quick Actions</h5>
+        <button class="profile-menu-item">
+          <i></i>
+          <span>Change Password</span>
+        </button>
+        <button class="profile-menu-item">
+          <i></i>
+          <span>Security Settings</span>
+        </button>
+        <button class="profile-menu-item">
+          <i></i>
+          <span>Help & Support</span>
+        </button>
+      </div>
+
+      <button type="button" class="button button-secondary full-width" style="margin-top: 20px;" id="admin-logout-panel-btn">Logout</button>
+    </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>

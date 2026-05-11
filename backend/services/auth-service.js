@@ -81,9 +81,12 @@ async function createSession(client, req, account) {
     `SELECT account_id FROM account_devices WHERE fingerprint_hash = $1 LIMIT 1`,
     [deviceFingerprint]
   );
+  // Temporarily disabled device restriction for development
+  /*
   if (linkedDevice.rowCount > 0 && linkedDevice.rows[0].account_id !== account.id && account.role === "user") {
     throw new AppError(409, "This device is already linked to another borrower account.");
   }
+  */
 
   const sessionResult = await client.query(
     `INSERT INTO sessions (account_id, refresh_token_hash, csrf_token_hash, device_fingerprint_hash, user_agent, ip_address, expires_at)
@@ -123,6 +126,8 @@ async function createUserAccount(payload, req) {
   }
 
   const result = await withTransaction(async (client) => {
+    // Temporarily disabled device restriction for development
+    /*
     const fingerprintHash = hashValue(getDeviceFingerprint(req));
     const duplicateDevice = await client.query(
       `SELECT account_id FROM account_devices WHERE fingerprint_hash = $1`,
@@ -131,6 +136,7 @@ async function createUserAccount(payload, req) {
     if (duplicateDevice.rowCount > 0) {
       throw new AppError(409, "This device is already linked to another account. Contact support if you need assistance.");
     }
+    */
 
     const duplicate = await client.query(
       `SELECT id FROM accounts WHERE phone = $1 OR ($2::text IS NOT NULL AND email = $2)`,
@@ -145,7 +151,13 @@ async function createUserAccount(payload, req) {
       `INSERT INTO accounts (role, full_name, email, phone, pin_hash, profile)
        VALUES ('user', $1, $2, $3, $4, $5)
        RETURNING id, role, full_name, email, phone, status, verification_status, permissions, profile, created_at, updated_at`,
-      [fullName, email, phone, passwordHash, JSON.stringify({ registrationIp: getIpAddress(req) })]
+      [fullName, email, phone, passwordHash, JSON.stringify({
+        registrationIp: getIpAddress(req),
+        fullName: fullName,
+        email: email,
+        phone: phone,
+        registrationDate: new Date().toISOString()
+      })]
     );
 
     const account = accountResult.rows[0];

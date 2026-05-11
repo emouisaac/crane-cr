@@ -5,120 +5,611 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="crane-api-base" content="">
   <title>Crane Credit | Super Admin Command Center</title>
+  <meta name="description" content="Super admin command center for platform management, backups, and security">
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="icon" href="img/Crane Credit.png" type="image/png">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="icon" href="img/Crane Credit.png" type="image/png">
   <link rel="stylesheet" href="styles.css">
-  <style>
-    body.super-workspace { margin: 0; font-family: 'Manrope', sans-serif; background: #0f172a; color: #dbe6f5; }
-    .super-shell { max-width: 1500px; margin: 0 auto; padding: 28px 20px 48px; }
-    .super-header { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 24px; }
-    .super-header h1 { margin: 0; font: 700 36px/1 'Space Grotesk', sans-serif; color: #fff; }
-    .super-header p { margin: 10px 0 0; color: #9fb1cb; }
-    .super-actions, .tool-row, .row-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-    .super-btn { border: none; border-radius: 14px; padding: 12px 16px; font: 700 14px/1 'Manrope', sans-serif; cursor: pointer; }
-    .super-btn.primary { background: #38bdf8; color: #082032; }
-    .super-btn.secondary { background: #1e293b; color: #dbe6f5; }
-    .super-btn.warning { background: #f59e0b; color: #111827; }
-    .super-btn.danger { background: #ef4444; color: #fff; }
-    .super-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .super-card, .super-panel { background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 24px; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25); padding: 22px; backdrop-filter: blur(12px); }
-    .super-card span { display: block; color: #8ca0bd; font-size: 13px; margin-bottom: 8px; }
-    .super-card strong { font-size: 34px; color: #fff; }
-    .super-layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; }
-    .super-panel h2 { margin: 0 0 16px; color: #fff; font-size: 20px; }
-    .panel-list { display: grid; gap: 12px; }
-    .panel-item { border: 1px solid rgba(148, 163, 184, 0.16); border-radius: 18px; padding: 16px; background: rgba(15, 23, 42, 0.55); }
-    .panel-item strong { color: #fff; }
-    .muted { color: #93a4bd; }
-    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .form-grid input, .form-grid textarea, .form-grid select { width: 100%; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 14px; padding: 12px 14px; background: rgba(15, 23, 42, 0.84); color: #fff; font: inherit; }
-    .form-grid textarea { min-height: 96px; resize: vertical; }
-    .full-span { grid-column: 1 / -1; }
-    .permissions-input { min-height: 84px; }
-    @media (max-width: 1180px) { .super-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .super-layout { grid-template-columns: 1fr; } }
-    @media (max-width: 640px) { .super-grid, .form-grid { grid-template-columns: 1fr; } .super-header { flex-direction: column; align-items: start; } }
-  </style>
 </head>
-<body class="super-workspace">
-  <div class="super-shell">
-    <header class="super-header">
-      <div>
-        <h1>Super Admin Command Center</h1>
-        <p>Control admin access, backups, audit visibility, and platform-wide operational risk.</p>
-      </div>
-      <div class="super-actions">
-        <button type="button" class="super-btn secondary" id="super-refresh-btn">Refresh</button>
-        <button type="button" class="super-btn warning" id="super-backup-btn">Create Backup</button>
-        <button type="button" class="super-btn secondary" id="super-logout-btn">Logout</button>
+<body class="intro-loading role-dashboard-page super-admin-dashboard-page">
+  <div class="site-intro" aria-hidden="true">
+    <img src="img/black crane.png" alt="Crane logo" class="site-intro-logo">
+  </div>
+
+  <div class="page-glow page-glow-left"></div>
+  <div class="page-glow page-glow-right"></div>
+
+  <div class="app-shell">
+    <!-- Header Navigation -->
+    <header class="dashboard-header">
+      <button type="button" class="header-brand" aria-label="Go to home">
+        <div class="logo-icon"><img src="img/black crane.png" alt=""></div>
+        <span>Crane Credit | Super Admin</span>
+      </button>
+      <nav class="header-nav">
+        <a href="#" class="nav-link active" data-view="overview">Dashboard</a>
+        <a href="#" class="nav-link" data-view="admins">Admins</a>
+        <a href="#" class="nav-link" data-view="users">Users</a>
+        <a href="#" class="nav-link" data-view="backups">Backups</a>
+        <a href="#" class="nav-link" data-action="open-contact">Support</a>
+        <a href="#" class="nav-link" data-action="open-login">Logout</a>
+      </nav>
+      <div class="header-actions">
+        <button type="button" class="mobile-search-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+        <button type="button" class="icon-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-badge">0</span>
+        </button>
       </div>
     </header>
 
-    <section class="super-grid">
-      <article class="super-card"><span>Total users</span><strong id="super-total-users">0</strong></article>
-      <article class="super-card"><span>Total admins</span><strong id="super-total-admins">0</strong></article>
-      <article class="super-card"><span>Suspended accounts</span><strong id="super-suspended-accounts">0</strong></article>
-      <article class="super-card"><span>Live applications</span><strong id="super-live-applications">0</strong></article>
-    </section>
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
 
-    <section class="super-layout">
-      <div class="panel-list">
-        <section class="super-panel">
-          <h2>Create Admin</h2>
-          <form id="create-admin-form" class="form-grid">
-            <input type="text" name="fullName" placeholder="Full name" required>
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="email" name="email" placeholder="Email address">
-            <input type="tel" name="phone" placeholder="+256...">
-            <input type="password" name="pin" placeholder="6-digit PIN" maxlength="6" required>
-            <textarea class="permissions-input full-span" name="permissions" placeholder="Comma-separated permissions, e.g. loans:approve, users:view"></textarea>
-            <div class="tool-row full-span">
-              <button type="submit" class="super-btn primary">Create Admin</button>
+    <!-- Dashboard Sidebar (for mobile) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon"><img src="img/black crane.png" alt=""></div>
+        <span>Crane Credit | Super Admin</span>
+      </div>
+      <nav class="sidebar-menu">
+        <a href="#" class="menu-item active" data-view="overview">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="menu-item" data-view="admins">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span>Admins</span>
+        </a>
+        <a href="#" class="menu-item" data-view="users">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span>Users</span>
+        </a>
+        <a href="#" class="menu-item" data-view="backups">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Backups</span>
+        </a>
+        <a href="#" class="menu-item" data-action="open-contact">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13"></path>
+            <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+          </svg>
+          <span>Support</span>
+        </a>
+        <a href="#" class="menu-item" data-action="open-login">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <path d="M10 17l5-5-5-5"></path>
+            <path d="M15 12H3"></path>
+          </svg>
+          <span>Logout</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="dashboard-content">
+      <section class="view-section active">
+        <div class="dashboard-grid role-dashboard-grid">
+          <article class="welcome-header-card role-span-full">
+            <div class="welcome-text">
+              <h1>Welcome, <span id="super-welcome-name">Super Admin</span></h1>
+              <p class="role-welcome-copy">Oversee admins, backups, security events, and the live health of every Crane Credit panel.</p>
             </div>
-          </form>
-        </section>
+            <div class="role-header-actions">
+              <button type="button" id="super-backup-btn" class="button role-action-warning">Backup Now</button>
+              <button type="button" id="super-refresh-btn" class="refresh-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 4v6h-6"></path>
+                  <path d="M1 20v-6h6"></path>
+                  <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"></path>
+                  <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"></path>
+                </svg>
+                <span>Refresh</span>
+              </button>
+            </div>
+          </article>
 
-        <section class="super-panel">
-          <h2>Admins</h2>
-          <div class="panel-list" id="super-admins-list"></div>
-        </section>
+          <article class="card first-section-card role-span-full">
+            <div class="section-content role-hero-content">
+              <canvas class="section-wave-canvas" aria-hidden="true"></canvas>
+              <img src="img/black crane.png" alt="Black crane" class="section-corner-image">
+              <div class="role-hero-copy">
+                <span class="role-kicker">Platform command</span>
+                <h2>Admin, borrower, and backup activity are connected in one control surface</h2>
+                <p id="super-session-name">Super admin session</p>
+              </div>
+              <div class="loan-balance-container">
+                <div class="loan-balance-label">Live applications</div>
+                <div class="loan-balance-amount" data-super-live-applications>0</div>
+              </div>
+            </div>
+          </article>
 
-        <section class="super-panel">
-          <h2>Users</h2>
-          <div class="panel-list" id="super-users-list"></div>
-        </section>
+          <article class="card second-section-card role-span-full">
+            <div class="account-snapshot role-snapshot-stack">
+              <div class="snapshot-hero">
+                <div>
+                  <span class="snapshot-kicker">Platform snapshot</span>
+                  <h2 id="super-overview-title">System standing by</h2>
+                  <p id="super-overview-message">Admin creation, account controls, settings, and backups will update here as soon as platform activity changes.</p>
+                </div>
+                <span class="snapshot-badge" id="super-overview-badge">Observing system</span>
+              </div>
+              <div class="snapshot-grid">
+                <div class="snapshot-item">
+                  <span class="snapshot-label">Total users</span>
+                  <strong data-super-total-users>0</strong>
+                </div>
+                <div class="snapshot-item">
+                  <span class="snapshot-label">Total admins</span>
+                  <strong data-super-total-admins>0</strong>
+                </div>
+                <div class="snapshot-item">
+                  <span class="snapshot-label">Suspended accounts</span>
+                  <strong data-super-suspended-accounts>0</strong>
+                </div>
+                <div class="snapshot-item">
+                  <span class="snapshot-label">Live applications</span>
+                  <strong data-super-live-applications>0</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card three-flex-card role-span-full">
+            <div class="flex-row">
+              <button type="button" class="flex-box" data-view-trigger="admins" aria-label="Open admin management">
+                <div class="flex-box-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+                <div class="flex-box-content">
+                  <span class="flex-box-label">Admins</span>
+                  <strong class="flex-box-value" data-super-total-admins>0</strong>
+                </div>
+              </button>
+              <button type="button" class="flex-box" data-view-trigger="users" aria-label="Open user management">
+                <div class="flex-box-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+                <div class="flex-box-content">
+                  <span class="flex-box-label">Users</span>
+                  <strong class="flex-box-value" data-super-total-users>0</strong>
+                </div>
+              </button>
+              <button type="button" class="flex-box" data-view-trigger="backups" aria-label="Open backups and settings">
+                <div class="flex-box-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </div>
+                <div class="flex-box-content">
+                  <span class="flex-box-label">Backups</span>
+                  <strong class="flex-box-value" id="super-latest-backup-label">No backup yet</strong>
+                </div>
+              </button>
+            </div>
+          </article>
+
+          <article class="card role-span-7">
+            <div class="section-heading">
+              <div>
+                <h2>Admin preview</h2>
+                <p class="section-subtitle">Quick visibility into the current admin team and access posture.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="super-admins-preview-list"></div>
+          </article>
+
+          <article class="card role-span-5">
+            <div class="section-heading">
+              <div>
+                <h2>Platform alerts</h2>
+                <p class="section-subtitle">Security events and system notifications affecting every panel.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="super-notifications-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid role-dashboard-grid">
+          <article class="card loan-request-intro-card role-span-full">
+            <div class="section-heading">
+              <div>
+                <h2>Admin management</h2>
+                <p class="section-subtitle">Create admins, update availability, and revoke sessions without leaving the shared dashboard flow.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="card role-span-5">
+            <div class="section-heading">
+              <div>
+                <h2>Create admin account</h2>
+                <p class="section-subtitle">Provision new operations access with role-specific permissions.</p>
+              </div>
+            </div>
+            <form class="role-form-stack" id="create-admin-form">
+              <label for="super-admin-role">Role</label>
+              <input id="super-admin-role" type="text" name="role" value="admin" readonly>
+              <label for="super-admin-full-name">Full Name</label>
+              <input id="super-admin-full-name" type="text" name="fullName" placeholder="Full name" required>
+              <label for="super-admin-username">Username</label>
+              <input id="super-admin-username" type="text" name="username" placeholder="Username" required>
+              <label for="super-admin-email">Email Address</label>
+              <input id="super-admin-email" type="email" name="email" placeholder="Email address">
+              <label for="super-admin-phone">Phone Number</label>
+              <input id="super-admin-phone" type="tel" name="phone" placeholder="+256...">
+              <label for="super-admin-pin">PIN</label>
+              <input id="super-admin-pin" type="password" name="pin" placeholder="6-digit PIN" maxlength="6" inputmode="numeric" pattern="\d{6}" required>
+              <label for="super-admin-permissions">Permissions</label>
+              <textarea id="super-admin-permissions" name="permissions" placeholder="Comma-separated permissions, e.g. loans:approve, users:view"></textarea>
+              <button type="submit" class="button button-primary">Create Admin</button>
+            </form>
+          </article>
+
+          <article class="card role-span-7">
+            <div class="section-heading">
+              <div>
+                <h2>Admins</h2>
+                <p class="section-subtitle">Enable, disable, and force logout admin accounts in real time.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="super-admins-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid role-dashboard-grid">
+          <article class="card loan-request-intro-card role-span-full">
+            <div class="section-heading">
+              <div>
+                <h2>User and security oversight</h2>
+                <p class="section-subtitle">Suspend accounts when needed and watch the security event stream as it happens.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="card role-span-7">
+            <div class="section-heading">
+              <div>
+                <h2>Users</h2>
+                <p class="section-subtitle">Account status, contact details, and rapid intervention controls.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="super-users-list"></div>
+          </article>
+
+          <article class="card role-span-5">
+            <div class="section-heading">
+              <div>
+                <h2>Security alerts</h2>
+                <p class="section-subtitle">Recent security events affecting authentication and platform access.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="super-security-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid role-dashboard-grid">
+          <article class="card loan-request-intro-card role-span-full">
+            <div class="section-heading">
+              <div>
+                <h2>Backups and platform settings</h2>
+                <p class="section-subtitle">Keep recovery points ready, tune global limits, and audit system-level changes.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="card role-span-5">
+            <div class="section-heading">
+              <div>
+                <h2>Platform settings</h2>
+                <p class="section-subtitle">Update global loan and operations settings used across the product.</p>
+              </div>
+            </div>
+            <form class="role-form-stack" id="settings-form">
+              <label for="super-max-loan-amount">Max Loan Amount</label>
+              <input id="super-max-loan-amount" type="number" name="maxLoanAmount" placeholder="Max loan amount">
+              <label for="super-daily-approval-limit">Daily Approval Limit</label>
+              <input id="super-daily-approval-limit" type="number" name="dailyApprovalLimit" placeholder="Daily approval limit">
+              <label for="super-support-notice">Support Notice</label>
+              <textarea id="super-support-notice" name="supportNotice" placeholder="Operational notice for the platform"></textarea>
+              <button type="submit" class="button button-secondary">Save Settings</button>
+            </form>
+          </article>
+
+          <article class="card role-span-7">
+            <div class="section-heading">
+              <div>
+                <h2>Backups</h2>
+                <p class="section-subtitle">Create restore points and recover the live system when required.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="super-backups-list"></div>
+          </article>
+
+          <article class="card role-span-full">
+            <div class="section-heading">
+              <div>
+                <h2>Audit trail</h2>
+                <p class="section-subtitle">A running history of super admin actions and system changes.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="super-audit-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Contact Modal -->
+      <div class="contact-modal-overlay">
+        <div class="contact-modal">
+          <div class="contact-modal-header">
+            <h2>Contact Crane Credit Support</h2>
+            <button type="button" class="contact-modal-close">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="contact-modal-body">
+            <p class="contact-modal-intro">Get in touch with our support team. Choose your preferred method:</p>
+            <div class="contact-options">
+              <button type="button" class="contact-option call-option">
+                <div class="contact-option-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                </div>
+                <div class="contact-option-content">
+                  <h3>Call Now</h3>
+                  <p>+256 788 408 032</p>
+                </div>
+                <div class="contact-option-arrow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+              <button type="button" class="contact-option whatsapp-option">
+                <div class="contact-option-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </div>
+                <div class="contact-option-content">
+                  <h3>WhatsApp Chat</h3>
+                  <p>+256 788 408 032</p>
+                </div>
+                <div class="contact-option-arrow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+              <button type="button" class="contact-option email-option">
+                <div class="contact-option-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                </div>
+                <div class="contact-option-content">
+                  <h3>Email Support</h3>
+                  <p>support@craneloans.com</p>
+                </div>
+                <div class="contact-option-arrow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+            </div>
+            <div class="contact-support-hours">
+              <p><strong>Support Hours:</strong> Monday - Friday, 8:00 AM - 6:00 PM (EAT)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Fixed Footer -->
+    <footer class="footer-card">
+      <div class="footer-grid">
+        <button type="button" class="footer-box" aria-label="Open navigation menu" aria-expanded="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="4" y1="6" x2="20" y2="6"></line>
+            <line x1="4" y1="12" x2="20" y2="12"></line>
+            <line x1="4" y1="18" x2="20" y2="18"></line>
+          </svg>
+        </button>
+        <button type="button" class="footer-box" aria-label="Admins" data-view-trigger="admins">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </button>
+        <button type="button" class="footer-box home-nav-btn" aria-label="Home" data-view-trigger="overview">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 10.5 12 3l9 7.5"></path>
+            <path d="M5 9.5V21h14V9.5"></path>
+          </svg>
+        </button>
+        <button type="button" class="footer-box" aria-label="Users" data-view-trigger="users">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </button>
+        <button type="button" class="footer-box" aria-label="Profile" data-action="open-profile">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4 21a8 8 0 0 1 16 0"></path>
+          </svg>
+        </button>
+      </div>
+    </footer>
+
+    <!-- Notification Panel (Slide-out) -->
+    <div class="notification-panel">
+      <div class="panel-header">
+        <h3>Notifications</h3>
+        <button type="button" class="close-btn">&times;</button>
+      </div>
+      <div class="panel-content notifications-list">
+        <div class="panel-empty-state">No notifications yet. New alerts will appear here.</div>
+      </div>
+    </div>
+
+    <button type="button" class="live-status-fab" aria-label="Live system updates" aria-live="polite">
+      <span class="live-status-indicator">
+        <span class="live-dot"></span>
+        LIVE
+      </span>
+      <span class="live-status-title">Monitoring platform activity...</span>
+      <span class="live-status-badge" style="display:none;">0</span>
+    </button>
+
+    <div class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Confirm Action</h3>
+          <button type="button" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="super-modal-body"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="button button-secondary">Cancel</button>
+          <button type="button" class="button button-primary">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile Panel (Slide-out) -->
+  <div class="profile-panel">
+    <div class="panel-header">
+      <h3>Profile</h3>
+      <button type="button" class="close-btn">&times;</button>
+    </div>
+    <div class="panel-content profile-panel-content">
+      <div class="profile-header-card">
+        <div class="profile-header">
+          <div class="profile-avatar"><strong>SA</strong></div>
+          <div class="profile-info">
+            <div class="profile-title-row">
+              <h3>Super Admin Account</h3>
+              <span class="profile-status-badge verified">Super Admin</span>
+            </div>
+            <p class="profile-secondary-text">Platform operations and control</p>
+          </div>
+        </div>
+        <div class="profile-summary-grid">
+          <div class="profile-summary-card">
+            <span>Role</span>
+            <strong>Super Admin</strong>
+          </div>
+          <div class="profile-summary-card">
+            <span>Status</span>
+            <strong>Active</strong>
+          </div>
+          <div class="profile-summary-card">
+            <span>Actions Taken</span>
+            <strong id="super-actions-count">0</strong>
+          </div>
+        </div>
       </div>
 
-      <div class="panel-list">
-        <section class="super-panel">
-          <h2>Settings</h2>
-          <form id="settings-form" class="form-grid">
-            <input type="number" name="maxLoanAmount" placeholder="Max loan amount">
-            <input type="number" name="dailyApprovalLimit" placeholder="Daily approval limit">
-            <textarea class="full-span" name="supportNotice" placeholder="Operational notice for the platform"></textarea>
-            <div class="tool-row full-span">
-              <button type="submit" class="super-btn secondary">Save Settings</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="super-panel">
-          <h2>Backups</h2>
-          <div class="panel-list" id="super-backups-list"></div>
-        </section>
-
-        <section class="super-panel">
-          <h2>Security Alerts</h2>
-          <div class="panel-list" id="super-security-list"></div>
-        </section>
-
-        <section class="super-panel">
-          <h2>Audit Trail</h2>
-          <div class="panel-list" id="super-audit-list"></div>
-        </section>
+      <div class="profile-section profile-data-section">
+        <h5>Account Information</h5>
+        <div class="profile-field-grid">
+          <div class="profile-field">
+            <span>Email</span>
+            <p id="super-profile-email">Not available</p>
+          </div>
+          <div class="profile-field">
+            <span>Phone</span>
+            <p id="super-profile-phone">Not available</p>
+          </div>
+          <div class="profile-field">
+            <span>Account Status</span>
+            <p>Active</p>
+          </div>
+          <div class="profile-field">
+            <span>Last Login</span>
+            <p id="super-last-login">Never</p>
+          </div>
+        </div>
       </div>
-    </section>
+
+      <div class="profile-section">
+        <h5>Quick Actions</h5>
+        <button class="profile-menu-item">
+          <i></i>
+          <span>Change Password</span>
+        </button>
+        <button class="profile-menu-item">
+          <i></i>
+          <span>Security Settings</span>
+        </button>
+        <button class="profile-menu-item">
+          <i></i>
+          <span>Help & Support</span>
+        </button>
+      </div>
+
+      <button type="button" class="button button-secondary full-width" style="margin-top: 20px;" id="super-logout-panel-btn">Logout</button>
+    </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
