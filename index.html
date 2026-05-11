@@ -1,0 +1,1283 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="crane-api-base" content="">
+  <title>Crane Credit | Loan Dashboard</title>
+  <meta name="description" content="Professional loan management dashboard with real-time tracking, AI insights, and seamless repayment">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="icon" href="img/Crane Credit.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  </head>
+<body class="intro-loading">
+  <div class="site-intro" aria-hidden="true">
+    <img src="img/black crane.png" alt="Crane logo" class="site-intro-logo">
+  </div>
+
+  <div class="page-glow page-glow-left"></div>
+  <div class="page-glow page-glow-right"></div>
+
+  <div class="app-shell">
+    <!-- Header Navigation -->
+    <header class="dashboard-header">
+      <button type="button" class="header-brand" aria-label="Go to home">
+        <div class="logo-icon"><img src="img/black crane.png" alt=""></div>
+        <span>Crane Credit</span>
+      </button>
+      <nav class="header-nav">
+        <a href="#" class="nav-link active" data-view="overview">Dashboard</a>
+        <a href="#" class="nav-link" data-view="loans">My Loans</a>
+        <a href="#" class="nav-link" data-view="repay">Repay</a>
+        <a href="#" class="nav-link" data-view="score">Credit Score</a>
+        <a href="#" class="nav-link" data-view="get-loan">Get Loan</a>
+        <a href="#" class="nav-link" data-view="referrals">Referrals</a>
+        <a href="#" class="nav-link">Contact Us</a>
+        <a href="#" class="nav-link" data-action="open-login">Login</a>
+
+      </nav>
+      <div class="header-actions">
+        <button type="button" class="mobile-search-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+        <button type="button" class="icon-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-badge">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- Dashboard Sidebar (for mobile) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon"><img src="img/black crane.png" alt=""></div>
+        <span>Crane Credit</span>
+      </div>
+      <nav class="sidebar-menu">
+        <a href="#" class="menu-item active" data-view="overview">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="menu-item" data-view="loans">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
+          <span>My Loans</span>
+        </a>
+        <a href="#" class="menu-item" data-view="repay">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"></path>
+            <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"></path>
+          </svg>
+          <span>Repay</span>
+        </a>
+        <a href="#" class="menu-item" data-view="score">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <span>Credit Score</span>
+        </a>
+        <a href="#" class="menu-item" data-view="get-loan">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18h6"></path>
+            <path d="M10 22h4"></path>
+            <path d="M12 2a7 7 0 0 0-4 12.75c.6.45 1 1.13 1 1.88V17h6v-.37c0-.75.4-1.43 1-1.88A7 7 0 0 0 12 2z"></path>
+          </svg>
+          <span>Get Loan</span>
+        </a>
+        <a href="#" class="menu-item" data-view="referrals">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-1a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v1"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <line x1="20" y1="8" x2="20" y2="14"></line>
+            <line x1="23" y1="11" x2="17" y2="11"></line>
+          </svg>
+          <span>Referrals</span>
+        </a>
+        <a href="#" class="menu-item" data-action="open-login">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13"></path>
+            <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+          </svg>
+          <span>Contact Us</span>
+        </a>
+        <a href="#" class="menu-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <path d="M10 17l5-5-5-5"></path>
+            <path d="M15 12H3"></path>
+          </svg>
+          <span>Login</span>
+        </a>
+      </nav>
+    </aside>
+    <main class="dashboard-content">
+      <section class="view-section active">
+        <div class="dashboard-grid">
+          <!-- Welcome Header -->
+          <article class="welcome-header-card">
+            <div class="welcome-text">
+              <h1>Welcome, <span>Member</span></h1>
+            </div>
+            <button type="button" class="refresh-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"></path>
+                <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"></path>
+              </svg>
+              <span>Refresh</span>
+            </button>
+          </article>
+
+        <!-- First Div - 30vh height -->
+        <article class="card first-section-card">
+          <div class="section-content">
+            <canvas class="section-wave-canvas" aria-hidden="true"></canvas>
+            <img src="img/black crane.png" alt="Black crane" class="section-corner-image">
+            <!-- Loan Balance Content -->
+            <div class="loan-balance-container">
+              <div class="loan-balance-label">Loan Balance</div>
+              <div class="loan-balance-amount">UGX 0</div>
+            </div>
+          </div>
+        </article>
+
+          <!-- Second Div - 40vh height -->
+          <article class="card second-section-card">
+            <div class="section-content">
+              <!-- Marketing Section -->
+              <div class="marketing-container" aria-hidden="false">
+                <!-- Animated Ticker -->
+                <div class="marketing-ticker">
+                  <div class="ticker-content">
+                    <span class="ticker-item">✨ Clean repayment streaks are unlocking bigger limits right now.</span>
+                    <span class="ticker-item">💚 Early repayments are helping more users save on interest.</span>
+                    <span class="ticker-item">🚀 Repeat borrowers are getting quicker approvals this hour.</span>
+                  </div>
+                </div>
+
+                <!-- Active Offer Showcase -->
+                <div class="offer-showcase">
+                  <div class="offer-card">
+                    <div class="offer-header">
+                      <span class="offer-label">Exclusive Offer</span>
+                      <span class="pulse-badge">LIVE</span>
+                    </div>
+                    <h3>Growth Boost</h3>
+                    <div class="offer-amount">UGX 5,000,000</div>
+                    <div class="offer-details">
+                      <div class="detail-row">
+                        <span class="detail-label">Rate</span>
+                        <span class="detail-value">1.2%/month</span>
+                      </div>
+                      <div class="detail-row">
+                        <span class="detail-label">Installment</span>
+                        <span class="detail-value">UGX 480,000</span>
+                      </div>
+                      <div class="detail-row">
+                        <span class="detail-label">Payout</span>
+                        <span class="detail-value">14 min ⚡</span>
+                      </div>
+                    </div>
+                    <p class="offer-message">Use it while your best rate is still live.</p>
+                    <button type="button" class="btn-apply-now">Apply Now →</button>
+                  </div>
+                </div>
+
+                <!-- Live Stats -->
+                <div class="live-stats">
+                  <div class="stat-item approved-stat">
+                    <div class="stat-number">128</div>
+                    <div class="stat-label">Approved Today</div>
+                  </div>
+                  <div class="stat-item approval-stat">
+                    <div class="stat-number">92%</div>
+                    <div class="stat-label">Approval Rate</div>
+                  </div>
+                  <div class="stat-item repeat-stat">
+                    <div class="stat-number">68%</div>
+                    <div class="stat-label">Repeat Borrowers</div>
+                  </div>
+                </div>
+              </div>
+              <div class="account-snapshot">
+                <div class="snapshot-hero">
+                  <div>
+                    <span class="snapshot-kicker">Account snapshot</span>
+                    <h2>No live account activity yet</h2>
+                    <p>Sign in to view current balances, due dates, and real account alerts.</p>
+                  </div>
+                  <span class="snapshot-badge">Awaiting sign in</span>
+                </div>
+                <div class="snapshot-grid">
+                  <div class="snapshot-item">
+                    <span class="snapshot-label">Active loans</span>
+                    <strong>0</strong>
+                  </div>
+                  <div class="snapshot-item">
+                    <span class="snapshot-label">Outstanding balance</span>
+                    <strong>UGX 0</strong>
+                  </div>
+                  <div class="snapshot-item">
+                    <span class="snapshot-label">Next due</span>
+                    <strong>Not scheduled</strong>
+                  </div>
+                  <div class="snapshot-item">
+                    <span class="snapshot-label">Unread alerts</span>
+                    <strong>0</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Three Flex Div Boxes -->
+          <article class="card three-flex-card">
+            <div class="flex-row">
+              <button type="button" class="flex-box" data-quick-box="active" aria-label="Open active loans">
+                <div class="flex-box-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="m9 12 2 2 4-4"></path>
+                  </svg>
+                </div>
+                <span class="flex-box-label">Active</span>
+              </button>
+              <button type="button" class="flex-box" data-quick-box="overdue" aria-label="Open overdue loans">
+                <div class="flex-box-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 7v5l3 2"></path>
+                  </svg>
+                </div>
+                <span class="flex-box-label">Over Due</span>
+              </button>
+              <button type="button" class="flex-box" data-quick-box="repay" aria-label="Open repay section">
+                <div class="flex-box-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"></path>
+                    <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"></path>
+                  </svg>
+                </div>
+                <span class="flex-box-label">Repay</span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid">
+          <article class="card loans-summary-card">
+            <div class="section-heading">
+              <div>
+                <h2>Active loans</h2>
+              </div>
+              <button type="button" class="text-button">View all</button>
+            </div>
+            <div class="loans-list"></div>
+          </article>
+
+          <article class="card loans-detail-card">
+            <div class="section-heading">
+              <div>
+                <h2>Loan portfolio</h2>
+              </div>
+              <div class="loan-status-pills">
+                <button type="button" class="status-pill active" data-status="all">All</button>
+                <button type="button" class="status-pill" data-status="active">Active</button>
+                <button type="button" class="status-pill" data-status="overdue">Overdue</button>
+                <button type="button" class="status-pill" data-status="completed">Completed</button>
+              </div>
+            </div>
+            <div class="loans-detail-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid">
+          <article class="card repayment-methods-card">
+            <div class="section-heading">
+              <div>
+                <h2>Repayment methods</h2>
+              </div>
+            </div>
+            <div class="payment-methods">
+              <button type="button" class="payment-method active">
+                <div class="method-logo"><img src="img/mtn logo.png" alt="MTN Mobile Money"></div>
+                <span>MTN Mobile Money</span>
+              </button>
+              <button type="button" class="payment-method">
+                <div class="method-logo"><img src="img/airtel logo.png" alt="Airtel Money"></div>
+                <span>Airtel Money</span>
+              </button>
+              <button type="button" class="payment-method">
+                <div class="method-logo"><img src="img/bank logo.jpg" alt="Bank Transfer"></div>
+                <span>Bank Transfer</span>
+              </button>
+              <button type="button" class="payment-method">
+                <div class="method-logo"><img src="img/card logo.avif" alt="Bank Card"></div>
+                <span>Bank Card</span>
+              </button>
+            </div>
+          </article>
+
+          <article class="card payment-form-card">
+            <div class="section-heading">
+              <div>
+                <h2>Make a payment</h2>
+              </div>
+              <button type="button" class="text-button">Review loans</button>
+            </div>
+            <div class="payment-form">
+              <div class="form-group">
+                <label>Loan</label>
+                <select>
+                  <option value="">No outstanding loans</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Payment type</label>
+                <div class="payment-type-options">
+                  <label class="radio-option">
+                    <input type="radio" name="payment-type" value="full" checked>
+                    <span>Full installment</span>
+                  </label>
+                  <label class="radio-option">
+                    <input type="radio" name="payment-type" value="partial">
+                    <span>Partial payment</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group" style="display: none;">
+                <label>Partial amount</label>
+                <input type="number" placeholder="Enter amount">
+              </div>
+              <div class="payment-summary">
+                <div class="summary-row">
+                  <span>Installment due</span>
+                  <strong>UGX 0</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Service fee</span>
+                  <strong>UGX 0</strong>
+                </div>
+                <div class="summary-row total">
+                  <span>Total today</span>
+                  <strong>UGX 0</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card early-repayment-card">
+            <div class="section-heading">
+              <div>
+                <h2>Early repayment</h2>
+              </div>
+            </div>
+            <div class="early-repay-details">
+              <div class="detail-row">
+                <span>Outstanding principal</span>
+                <strong>UGX 0</strong>
+              </div>
+              <div class="detail-row">
+                <span>Early payoff benefit</span>
+                <strong>UGX 0</strong>
+              </div>
+              <div class="detail-row highlight">
+                <span>Total payoff today</span>
+                <strong>UGX 0</strong>
+              </div>
+            </div>
+            <button type="button" class="button button-primary full-width">Repay early</button>
+          </article>
+
+          <article class="card autodebit-setup-card">
+            <div class="section-heading">
+              <div>
+                <h2>Auto-debit setup</h2>
+              </div>
+            </div>
+            <div class="autodebit-form">
+              <div class="form-group">
+                <label>Debit day</label>
+                <select>
+                  <option>2 days before due date</option>
+                  <option>1 day before due date</option>
+                  <option>On due date</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Source account</label>
+                <select>
+                  <option>MTN Mobile Money</option>
+                  <option>Airtel Money</option>
+                  <option>Bank account</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox">
+                  <span>I allow automatic deductions on the selected schedule.</span>
+                </label>
+                <button type="button" class="button button-secondary">Enable auto-debit</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid">
+          <article class="card score-detail-card">
+            <div class="section-heading">
+              <div>
+                <h2>Credit score</h2>
+              </div>
+            </div>
+            <div class="score-visual">
+              <div class="score-circle">
+                <svg width="200" height="200" viewBox="0 0 200 200" aria-hidden="true">
+                  <circle class="score-bg" cx="100" cy="100" r="88" fill="none" stroke-width="14"></circle>
+                  <circle class="score-fill" cx="100" cy="100" r="88" fill="none" stroke-width="14" stroke-dasharray="553" stroke-dashoffset="70"></circle>
+                </svg>
+                <div class="score-center">
+                  <strong class="big-score">N/A</strong>
+                  <span class="score-grade">No score yet</span>
+                </div>
+              </div>
+            </div>
+            <div class="score-breakdown">
+              <h3>Score drivers</h3>
+              <div class="score-drivers-list">
+                <div class="panel-empty-state compact">
+                  Credit drivers will appear here once your live profile data is available.
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card score-tips-card">
+            <div class="section-heading">
+              <div>
+                <h2>How to improve</h2>
+              </div>
+            </div>
+            <div class="tips-list">
+              <div class="tip-item">
+                <div class="tip-number">1</div>
+                <div class="tip-content">
+                  <h4>Repay before the deadline</h4>
+                  <p>Even one early payment can strengthen your recent repayment streak.</p>
+                </div>
+              </div>
+              <div class="tip-item">
+                <div class="tip-number">2</div>
+                <div class="tip-content">
+                  <h4>Keep balances lighter</h4>
+                  <p>Reducing the amount left outstanding improves utilization signals.</p>
+                </div>
+              </div>
+              <div class="tip-item">
+                <div class="tip-number">3</div>
+                <div class="tip-content">
+                  <h4>Use one trusted repayment route</h4>
+                  <p>Stable device and payment behavior lowers servicing risk.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card score-history-card">
+            <div class="section-heading">
+              <div>
+                <h2>Score history</h2>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas></canvas>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid">
+          <article class="card loan-request-intro-card">
+            <div class="section-heading">
+              <div>
+                <h2>Request a loan</h2>
+                <p class="section-subtitle">Complete this application and upload required documents with clear camera photos. Your submission is reviewed by the Crane loan operations team before approval.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="card loan-request-card">
+            <div class="section-heading">
+              <div>
+                <h2>Loan application form</h2>
+                <p>Provide accurate borrower information and upload all required documentation for manual admin verification.</p>
+              </div>
+            </div>
+            <form class="loan-request-form" id="loan-request-form">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Full name</label>
+                  <input type="text" name="fullName" placeholder="e.g. Grace Kato" required>
+                </div>
+                <div class="form-group">
+                  <label>Phone number</label>
+                  <input type="tel" name="phone" placeholder="+256 77X XXX XXX" required>
+                </div>
+                <div class="form-group">
+                  <label>Email address</label>
+                  <input type="email" name="email" placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                  <label>ID / passport number</label>
+                  <input type="text" name="nationalId" placeholder="e.g. NIN123456789" required>
+                </div>
+                <div class="form-group">
+                  <label>Date of birth</label>
+                  <input type="date" name="dateOfBirth" required>
+                </div>
+                <div class="form-group">
+                  <label>District</label>
+                  <select name="district" required>
+                    <option value="">Select district</option>
+                    <option value="kampala">Kampala</option>
+                    <option value="wakiso">Wakiso</option>
+                    <option value="mukono">Mukono</option>
+                    <option value="entebbe">Entebbe</option>
+                    <option value="masaka">Masaka</option>
+                    <option value="mbarara">Mbarara</option>
+                    <option value="fort_portal">Fort Portal</option>
+                    <option value="jinja">Jinja</option>
+                    <option value="soroti">Soroti</option>
+                    <option value="lira">Lira</option>
+                    <option value="gulu">Gulu</option>
+                    <option value="arua">Arua</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Subcounty / Division</label>
+                  <select name="subcounty" required>
+                    <option value="">Select subcounty</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Zone / Village</label>
+                  <input type="text" name="village" placeholder="e.g. Nakasero, Kampala Hill" required>
+                </div>
+                <div class="form-group">
+                  <label>Applicant category</label>
+                  <select name="applicantCategory" required>
+                    <option value="">Select category</option>
+                    <option value="employee">Employee</option>
+                    <option value="civil_servant">Civil servant</option>
+                    <option value="self_employed">Self-employed</option>
+                    <option value="service_provider">Service provider</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Loan amount requested</label>
+                  <input type="number" name="amount" placeholder="UGX 1,200,000" required>
+                </div>
+                <div class="form-group">
+                  <label>Preferred term</label>
+                  <select name="termMonths" required>
+                    <option value="">Select term</option>
+                    <option value="3">3 months</option>
+                    <option value="6">6 months</option>
+                    <option value="9">9 months</option>
+                    <option value="12">12 months</option>
+                    <option value="18">18 months</option>
+                  </select>
+                </div>
+                <div class="form-group full-width">
+                  <label>Loan purpose</label>
+                  <select name="loanPurpose" required>
+                    <option value="">Select purpose</option>
+                    <option value="working_capital">Working capital</option>
+                    <option value="payroll">Payroll & wages</option>
+                    <option value="inventory">Inventory purchase</option>
+                    <option value="medical">Medical expenses</option>
+                    <option value="education">Education costs</option>
+                    <option value="equipment">Equipment or tools</option>
+                    <option value="business_expansion">Business expansion</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-divider"></div>
+
+              <div class="section-subheading">Employment / business details</div>
+              <div class="form-grid">
+                <div class="form-group employment-detail-group">
+                  <label>Employer / organization</label>
+                  <input type="text" name="employerName" placeholder="Company or agency name">
+                </div>
+                <div class="form-group employment-detail-group">
+                  <label>Position / grade</label>
+                  <input type="text" name="positionGrade" placeholder="e.g. Sales officer">
+                </div>
+                <div class="form-group employment-detail-group">
+                  <label>Length of service</label>
+                  <input type="text" name="lengthOfService" placeholder="e.g. 4 years">
+                </div>
+                <div class="form-group business-detail-group">
+                  <label>Business or service name</label>
+                  <input type="text" name="businessName" placeholder="Name of enterprise">
+                </div>
+                <div class="form-group business-detail-group">
+                  <label>Business / service category</label>
+                  <input type="text" name="businessCategory" placeholder="e.g. Retail, logistics, hospitality">
+                </div>
+                <div class="form-group business-detail-group">
+                  <label>Registration number</label>
+                  <input type="text" name="businessRegistrationNumber" placeholder="e.g. B12345/2025">
+                </div>
+                <div class="form-group">
+                  <label>Monthly net income</label>
+                  <input type="number" name="monthlyIncome" placeholder="UGX 1,500,000">
+                </div>
+                <div class="form-group">
+                  <label>Other monthly income</label>
+                  <input type="number" name="otherMonthlyIncome" placeholder="UGX 0">
+                </div>
+                <div class="form-group">
+                  <label>Existing repayment obligations</label>
+                  <input type="text" name="existingObligations" placeholder="e.g. Loan, rent">
+                </div>
+              </div>
+
+              <div class="form-divider"></div>
+
+              <div class="section-subheading">Document uploads</div>
+              <div class="camera-capture-note">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+                <span>📱 Tap any field to use your device camera for photo capture</span>
+              </div>
+              <div class="document-grid">
+                <div class="form-group">
+                  <label>ID / passport front</label>
+                  <input type="file" name="id_front" accept="image/*" capture="environment" required>
+                </div>
+                <div class="form-group">
+                  <label>ID / passport back</label>
+                  <input type="file" name="id_back" accept="image/*" capture="environment" required>
+                </div>
+                <div class="form-group">
+                  <label>Income proof</label>
+                  <input type="file" name="income_proof" accept="image/*" capture="environment" required>
+                </div>
+                <div class="form-group">
+                  <label>Bank statement</label>
+                  <input type="file" name="bank_statement" accept="image/*" capture="environment">
+                </div>
+                <div class="form-group">
+                  <label>Live selfie / verification photo</label>
+                  <input type="file" name="selfie_photo" accept="image/*" capture="user" required>
+                </div>
+                <div class="form-group">
+                  <label>Additional documents</label>
+                  <input type="file" name="additional_document" accept="image/*" capture="environment" multiple>
+                </div>
+              </div>
+
+              <div class="form-divider"></div>
+
+              <div class="submission-feedback" aria-live="polite"></div>
+
+              <div class="form-actions">
+                <button type="submit" class="button button-primary">Submit request</button>
+                <span class="form-help-text">Status will be updated once admin review begins.</span>
+              </div>
+            </form>
+          </article>
+
+          <article class="card loan-request-sidebar-card">
+            <div class="section-heading">
+              <div>
+                <h2>Application workflow</h2>
+              </div>
+            </div>
+            <div class="loan-request-sidebar">
+              <div class="workflow-step">
+                <span class="workflow-badge">1</span>
+                <div>
+                  <strong>Complete borrower profile</strong>
+                  <p>Provide identity, category and address details for a tailored loan review.</p>
+                </div>
+              </div>
+              <div class="workflow-step">
+                <span class="workflow-badge">2</span>
+                <div>
+                  <strong>Upload required documents</strong>
+                  <p>Use camera capture or upload clear images of your ID, proof of income, and selfie.</p>
+                </div>
+              </div>
+              <div class="workflow-step">
+                <span class="workflow-badge">3</span>
+                <div>
+                  <strong>Admin verification</strong>
+                  <p>The operations team reviews the documents and confirms your identity before approval.</p>
+                </div>
+              </div>
+              <div class="workflow-step">
+                <span class="workflow-badge">4</span>
+                <div>
+                  <strong>Decision & disbursement</strong>
+                  <p>Receive confirmation and payment instructions once the application is approved.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid">
+          <article class="card referral-hero-card">
+            <div class="section-heading">
+              <div>
+                <h2>Referral center</h2>
+              </div>
+            </div>
+            <div class="referral-code-display">
+              <span class="code-label">Your referral code</span>
+              <strong class="code-value">Unavailable</strong>
+              <button type="button" class="copy-btn" disabled>Copy</button>
+            </div>
+            <div class="referral-link-display">
+              <label class="link-label">Shareable link</label>
+              <input type="text" value="" placeholder="Referral links will appear here when the program is enabled." readonly>
+            </div>
+          </article>
+
+          <article class="card referral-earnings-card">
+            <div class="section-heading">
+              <div>
+                <h2>Earnings trend</h2>
+              </div>
+            </div>
+            <div class="chart-empty-state">
+              Referral earnings will appear here after verified referrals begin borrowing.
+            </div>
+          </article>
+
+          <article class="card recent-referrals-card">
+            <div class="section-heading">
+              <div>
+                <h2>Recent referrals</h2>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="referrals-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Level</th>
+                    <th>Earned</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="5" class="table-empty-state">No referral activity has been recorded for this account yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Contact Modal -->
+      <div class="contact-modal-overlay">
+        <div class="contact-modal">
+          <div class="contact-modal-header">
+            <h2>Contact Crane Credit Support</h2>
+            <button type="button" class="contact-modal-close">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="contact-modal-body">
+            <p class="contact-modal-intro">Get in touch with our support team. Choose your preferred method:</p>
+            
+            <div class="contact-options">
+              <!-- Call Now -->
+              <button type="button" class="contact-option call-option">
+                <div class="contact-option-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                </div>
+                <div class="contact-option-content">
+                  <h3>Call Now</h3>
+                  <p>+256 788 408 032</p>
+                </div>
+                <div class="contact-option-arrow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+
+              <!-- WhatsApp Chat -->
+              <button type="button" class="contact-option whatsapp-option">
+                <div class="contact-option-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </div>
+                <div class="contact-option-content">
+                  <h3>WhatsApp Chat</h3>
+                  <p>+256 788 408 032</p>
+                </div>
+                <div class="contact-option-arrow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+
+              <!-- Email Support -->
+              <button type="button" class="contact-option email-option">
+                <div class="contact-option-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                </div>
+                <div class="contact-option-content">
+                  <h3>Email Support</h3>
+                  <p>support@craneloans.com</p>
+                </div>
+                <div class="contact-option-arrow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </button>
+            </div>
+
+            <div class="contact-support-hours">
+              <p><strong>Support Hours:</strong> Monday - Friday, 8:00 AM - 6:00 PM (EAT)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Fixed Footer -->
+    <footer class="footer-card">
+      <div class="footer-grid">
+        <button type="button" class="footer-box" aria-label="Open navigation menu" aria-expanded="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="4" y1="6" x2="20" y2="6"></line>
+            <line x1="4" y1="12" x2="20" y2="12"></line>
+            <line x1="4" y1="18" x2="20" y2="18"></line>
+          </svg>
+          
+        </button>
+        <button type="button" class="footer-box" aria-label="Money/Loans">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+            <circle cx="12" cy="12" r="2.5"></circle>
+            <path d="M6 12h.01M18 12h.01"></path>
+          </svg>
+          
+        </button>
+        <button type="button" class="footer-box home-nav-btn" aria-label="Home">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 10.5 12 3l9 7.5"></path>
+            <path d="M5 9.5V21h14V9.5"></path>
+          </svg>
+          
+        </button>
+        <button type="button" class="footer-box" aria-label="Chat/Support">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
+          </svg>
+          
+        </button>
+        <button type="button" class="footer-box" aria-label="Profile">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4 21a8 8 0 0 1 16 0"></path>
+          </svg>
+          
+        </button>
+      </div>
+    </footer>
+
+    <!-- Notification Panel (Slide-out) -->
+    <div class="notification-panel">
+      <div class="panel-header">
+        <h3>Notifications</h3>
+        <button type="button" class="close-btn">&times;</button>
+      </div>
+      <div class="panel-content notifications-list">
+        <div class="panel-empty-state">No notifications yet. New account alerts will appear here.</div>
+      </div>
+    </div>
+
+    <button type="button" class="live-status-fab" aria-label="Live loan status updates" aria-live="polite">
+      <span class="live-status-indicator">
+        <span class="live-dot"></span>
+        LIVE
+      </span>
+      <span class="live-status-title">Checking your loan application status…</span>
+      <span class="live-status-badge" style="display:none;">0</span>
+    </button>
+
+    <div class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Confirm Payment</h3>
+          <button type="button" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="payment-confirmation">
+            <div class="confirm-amount">
+              <span class="amount-label">Amount to Pay</span>
+              <span class="amount-value">UGX 0</span>
+            </div>
+            <div class="confirm-method">
+              <span class="method-label">Payment Method</span>
+              <span class="method-value">MTN Mobile Money</span>
+            </div>
+            <p class="payment-instructions">You will receive a prompt on your mobile money to confirm the payment.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="button button-secondary">Cancel</button>
+          <button type="button" class="button button-primary">Confirm Payment</button>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile Panel (Slide-out) -->
+  <div class="profile-panel">
+    <div class="panel-header">
+      <h3>Profile</h3>
+      <button type="button" class="close-btn">&times;</button>
+    </div>
+    <div class="panel-content profile-panel-content">
+      <div class="profile-header-card">
+        <div class="profile-header">
+          <div class="profile-avatar">
+            <span>M</span>
+          </div>
+          <div class="profile-info">
+            <div class="profile-title-row">
+              <h4>Account holder</h4>
+              <span class="profile-status-badge">Unverified</span>
+            </div>
+            <p>Phone not available</p>
+            <p class="profile-secondary-text">Last activity is not available yet.</p>
+          </div>
+        </div>
+        <div class="profile-summary-grid">
+          <div class="profile-summary-card">
+            <span class="label">Customer ID</span>
+            <strong>--</strong>
+          </div>
+          <div class="profile-summary-card">
+            <span class="label">Member since</span>
+            <strong>--</strong>
+          </div>
+          <div class="profile-summary-card">
+            <span class="label">Credit score</span>
+            <strong>N/A</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section profile-data-section">
+        <h5>Account Information</h5>
+        <div class="profile-field-grid">
+          <div class="profile-field-card">
+            <span class="label">Phone</span>
+            <span class="value">Not provided</span>
+          </div>
+          <div class="profile-field-card">
+            <span class="label">Email</span>
+            <span class="value">Not provided</span>
+          </div>
+          <div class="profile-field-card">
+            <span class="label">Account status</span>
+            <span class="value">Unknown</span>
+          </div>
+          <div class="profile-field-card">
+            <span class="label">Last login</span>
+            <span class="value">Not available</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h5>Account Settings</h5>
+        <button type="button" class="profile-menu-item">
+          <span>Change PIN</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+        <button type="button" class="profile-menu-item">
+          <span>Security Settings</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+        <button type="button" class="profile-menu-item">
+          <span>Notification Preferences</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <div class="profile-section">
+        <h5>Support</h5>
+        <button type="button" class="profile-menu-item">
+          <span>Help & Support</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+        <button type="button" class="profile-menu-item">
+          <span>Terms & Conditions</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <button type="button" class="btn btn-danger profile-logout-btn">
+        Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal-overlay">
+    <div class="modal-container auth-modal-container">
+      <div class="auth-header">
+        <div class="auth-logo">
+          <img src="img/black crane.png" alt="Crane Credit" class="auth-logo-img">
+          <span class="auth-logo-text">Crane Credit</span>
+        </div>
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">Sign in to access your loan dashboard</p>
+        <button type="button" class="modal-close">&times;</button>
+      </div>
+
+      <div class="auth-form-container">
+        <!-- Login Form -->
+        <form class="auth-form active" id="user-login-form">
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <div class="phone-input-group">
+              <select class="country-select" name="countryCode">
+                <option value="UG">🇺🇬 +256</option>
+                <option value="KE">🇰🇪 +254</option>
+                <option value="TZ">🇹🇿 +255</option>
+                <option value="NG">🇳🇬 +234</option>
+              </select>
+                <input
+                  type="tel"
+                  class="form-input phone-input"
+                  name="phone"
+                  placeholder="7XX XXX XXX"
+                  required>
+            </div>
+            <div class="form-error"></div>
+          </div>
+
+          <div class="form-group password-field">
+            <label class="form-label">PIN</label>
+            <div class="password-input-wrapper">
+                <input
+                  type="password"
+                  class="form-input"
+                  name="pin"
+                  placeholder="Enter your 6-digit PIN"
+                  maxlength="6"
+                  required>
+              <button type="button" class="password-toggle" data-target="login-pin">Show</button>
+            </div>
+            <div class="form-error"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary auth-submit-btn">
+            <span class="btn-text">Sign In</span>
+            <div class="btn-spinner"></div>
+          </button>
+
+          <div class="auth-links">
+            <button type="button" class="auth-link">Forgot PIN?</button>
+            <span class="auth-separator">•</span>
+            <button type="button" class="auth-link">Create Account</button>
+          </div>
+        </form>
+
+        <!-- Registration Form -->
+        <form class="auth-form" id="user-register-form">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input
+              type="text"
+              class="form-input"
+              name="fullName"
+              placeholder="Enter your full name"
+              autocomplete="name"
+              required>
+            <div class="form-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <div class="phone-input-group">
+              <select class="country-select" name="countryCode">
+                <option value="UG">🇺🇬 +256</option>
+                <option value="KE">🇰🇪 +254</option>
+                <option value="TZ">🇹🇿 +255</option>
+                <option value="NG">🇳🇬 +234</option>
+              </select>
+                <input
+                  type="tel"
+                  class="form-input phone-input"
+                  name="phone"
+                  placeholder="7XX XXX XXX"
+                  required>
+            </div>
+            <div class="form-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address <span class="optional">(Optional)</span></label>
+            <input
+              type="email"
+              class="form-input"
+              name="email"
+              placeholder="your.email@example.com">
+            <div class="form-error"></div>
+          </div>
+
+          <div class="form-group password-field">
+            <label class="form-label">Create 6-Digit PIN</label>
+            <div class="password-input-wrapper">
+                <input
+                  type="password"
+                  class="form-input"
+                  name="pin"
+                  placeholder="Enter 6-digit PIN"
+                  maxlength="6"
+                  required>
+              <button type="button" class="password-toggle" data-target="register-pin">Show</button>
+            </div>
+            <div class="form-error"></div>
+          </div>
+
+          <div class="form-group password-field">
+            <label class="form-label">Confirm PIN</label>
+            <div class="password-input-wrapper">
+                <input
+                  type="password"
+                  class="form-input"
+                  name="confirmPin"
+                  placeholder="Confirm your PIN"
+                  maxlength="6"
+                  required>
+              <button type="button" class="password-toggle" data-target="register-pin-confirm">Show</button>
+            </div>
+            <div class="form-error"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary auth-submit-btn">
+            <span class="btn-text">Create Account</span>
+            <div class="btn-spinner"></div>
+          </button>
+
+          <div class="auth-links">
+            <button type="button" class="auth-link">Back to Sign In</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="auth-footer">
+        <p class="auth-footer-text">
+          By signing in, you agree to our
+          <a href="terms.html" class="auth-footer-link">Terms of Service</a> and
+          <a href="privacy.html" class="auth-footer-link">Privacy Policy</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Box -->
+  <div class="chat-container">
+    <div class="chat-header">
+      <h3>Support Chat</h3>
+      <button type="button" class="chat-close-btn">&times;</button>
+    </div>
+    <div class="chat-messages">
+      <div class="chat-message system">
+        <p>Welcome to Crane Credit Support! How can we help you today?</p>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" class="chat-input" placeholder="Type your message...">
+      <button type="button" class="chat-send-btn">Send</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="frontend/js/api-client.js"></script>
+  <script src="frontend/js/auth-manager.js"></script>
+  <script src="frontend/js/realtime-client.js"></script>
+  <script src="frontend/js/utils/form-validator.js"></script>
+  <script src="frontend/js/utils/notifications.js"></script>
+  <script src="frontend/js/pages/index-page.js"></script>
+
+  </body>
+</html>

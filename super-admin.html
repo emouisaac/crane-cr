@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="crane-api-base" content="">
+  <title>Crane Credit | Super Admin Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="img/Crane Credit.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body.super-workspace { margin: 0; font-family: 'Manrope', sans-serif; background: #0f172a; color: #dbe6f5; }
+    .super-shell { max-width: 1500px; margin: 0 auto; padding: 28px 20px 48px; }
+    .super-header { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 24px; }
+    .super-header h1 { margin: 0; font: 700 36px/1 'Space Grotesk', sans-serif; color: #fff; }
+    .super-header p { margin: 10px 0 0; color: #9fb1cb; }
+    .super-actions, .tool-row, .row-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .super-btn { border: none; border-radius: 14px; padding: 12px 16px; font: 700 14px/1 'Manrope', sans-serif; cursor: pointer; }
+    .super-btn.primary { background: #38bdf8; color: #082032; }
+    .super-btn.secondary { background: #1e293b; color: #dbe6f5; }
+    .super-btn.warning { background: #f59e0b; color: #111827; }
+    .super-btn.danger { background: #ef4444; color: #fff; }
+    .super-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .super-card, .super-panel { background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 24px; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25); padding: 22px; backdrop-filter: blur(12px); }
+    .super-card span { display: block; color: #8ca0bd; font-size: 13px; margin-bottom: 8px; }
+    .super-card strong { font-size: 34px; color: #fff; }
+    .super-layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; }
+    .super-panel h2 { margin: 0 0 16px; color: #fff; font-size: 20px; }
+    .panel-list { display: grid; gap: 12px; }
+    .panel-item { border: 1px solid rgba(148, 163, 184, 0.16); border-radius: 18px; padding: 16px; background: rgba(15, 23, 42, 0.55); }
+    .panel-item strong { color: #fff; }
+    .muted { color: #93a4bd; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .form-grid input, .form-grid textarea, .form-grid select { width: 100%; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 14px; padding: 12px 14px; background: rgba(15, 23, 42, 0.84); color: #fff; font: inherit; }
+    .form-grid textarea { min-height: 96px; resize: vertical; }
+    .full-span { grid-column: 1 / -1; }
+    .permissions-input { min-height: 84px; }
+    @media (max-width: 1180px) { .super-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .super-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { .super-grid, .form-grid { grid-template-columns: 1fr; } .super-header { flex-direction: column; align-items: start; } }
+  </style>
+</head>
+<body class="super-workspace">
+  <div class="super-shell">
+    <header class="super-header">
+      <div>
+        <h1>Super Admin Command Center</h1>
+        <p>Control admin access, backups, audit visibility, and platform-wide operational risk.</p>
+      </div>
+      <div class="super-actions">
+        <button type="button" class="super-btn secondary" id="super-refresh-btn">Refresh</button>
+        <button type="button" class="super-btn warning" id="super-backup-btn">Create Backup</button>
+        <button type="button" class="super-btn secondary" id="super-logout-btn">Logout</button>
+      </div>
+    </header>
+
+    <section class="super-grid">
+      <article class="super-card"><span>Total users</span><strong id="super-total-users">0</strong></article>
+      <article class="super-card"><span>Total admins</span><strong id="super-total-admins">0</strong></article>
+      <article class="super-card"><span>Suspended accounts</span><strong id="super-suspended-accounts">0</strong></article>
+      <article class="super-card"><span>Live applications</span><strong id="super-live-applications">0</strong></article>
+    </section>
+
+    <section class="super-layout">
+      <div class="panel-list">
+        <section class="super-panel">
+          <h2>Create Admin</h2>
+          <form id="create-admin-form" class="form-grid">
+            <input type="text" name="fullName" placeholder="Full name" required>
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="email" name="email" placeholder="Email address">
+            <input type="tel" name="phone" placeholder="+256...">
+            <input type="password" name="pin" placeholder="6-digit PIN" maxlength="6" required>
+            <textarea class="permissions-input full-span" name="permissions" placeholder="Comma-separated permissions, e.g. loans:approve, users:view"></textarea>
+            <div class="tool-row full-span">
+              <button type="submit" class="super-btn primary">Create Admin</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="super-panel">
+          <h2>Admins</h2>
+          <div class="panel-list" id="super-admins-list"></div>
+        </section>
+
+        <section class="super-panel">
+          <h2>Users</h2>
+          <div class="panel-list" id="super-users-list"></div>
+        </section>
+      </div>
+
+      <div class="panel-list">
+        <section class="super-panel">
+          <h2>Settings</h2>
+          <form id="settings-form" class="form-grid">
+            <input type="number" name="maxLoanAmount" placeholder="Max loan amount">
+            <input type="number" name="dailyApprovalLimit" placeholder="Daily approval limit">
+            <textarea class="full-span" name="supportNotice" placeholder="Operational notice for the platform"></textarea>
+            <div class="tool-row full-span">
+              <button type="submit" class="super-btn secondary">Save Settings</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="super-panel">
+          <h2>Backups</h2>
+          <div class="panel-list" id="super-backups-list"></div>
+        </section>
+
+        <section class="super-panel">
+          <h2>Security Alerts</h2>
+          <div class="panel-list" id="super-security-list"></div>
+        </section>
+
+        <section class="super-panel">
+          <h2>Audit Trail</h2>
+          <div class="panel-list" id="super-audit-list"></div>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="frontend/js/api-client.js"></script>
+  <script src="frontend/js/auth-manager.js"></script>
+  <script src="frontend/js/realtime-client.js"></script>
+  <script src="frontend/js/utils/form-validator.js"></script>
+  <script src="frontend/js/utils/notifications.js"></script>
+  <script src="frontend/js/pages/super-admin-dashboard-page.js"></script>
+</body>
+</html>

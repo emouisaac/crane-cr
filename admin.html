@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="crane-api-base" content="">
+  <title>Crane Credit | Admin Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="img/Crane Credit.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body.admin-workspace { margin: 0; font-family: 'Manrope', sans-serif; background: #f3f7fb; color: #132238; }
+    .workspace-shell { max-width: 1440px; margin: 0 auto; padding: 28px 20px 48px; }
+    .workspace-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
+    .workspace-title h1 { margin: 0; font: 700 34px/1 'Space Grotesk', sans-serif; }
+    .workspace-title p { margin: 10px 0 0; color: #5f6f82; }
+    .workspace-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .summary-card, .panel { background: #fff; border-radius: 22px; box-shadow: 0 18px 45px rgba(18, 35, 56, 0.08); padding: 22px; }
+    .summary-card span { display: block; color: #6c7b8d; font-size: 13px; margin-bottom: 8px; }
+    .summary-card strong { font-size: 32px; font-weight: 800; }
+    .workspace-grid { display: grid; grid-template-columns: 1.45fr .95fr; gap: 20px; }
+    .panel h2 { margin: 0 0 16px; font-size: 20px; }
+    .muted { color: #64748b; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .applications-list, .notifications-list, .detail-documents, .detail-comments, .users-list { display: grid; gap: 12px; }
+    .application-item, .notification-item, .document-item, .comment-item, .user-item { border: 1px solid #e3ebf4; border-radius: 18px; padding: 16px; background: #f9fbfd; }
+    .application-item.active { border-color: #2857c5; background: #eef4ff; }
+    .row-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+    .status-chip { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 700; text-transform: capitalize; }
+    .status-chip.warning { background: #fef3c7; color: #b45309; }
+    .status-chip.success { background: #dcfce7; color: #15803d; }
+    .status-chip.danger { background: #fee2e2; color: #b91c1c; }
+    .mini-meta { margin-top: 10px; color: #64748b; font-size: 13px; display: flex; gap: 14px; flex-wrap: wrap; }
+    .detail-grid { display: grid; gap: 18px; }
+    .detail-block { border: 1px solid #e3ebf4; border-radius: 18px; padding: 16px; }
+    .detail-block h3 { margin: 0 0 12px; font-size: 16px; }
+    .detail-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; font-size: 14px; }
+    .detail-meta strong { display: block; color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+    .action-row, .document-actions, .user-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .admin-note-form textarea, .request-documents-form textarea { width: 100%; min-height: 100px; border: 1px solid #d5dfeb; border-radius: 14px; padding: 12px 14px; font: inherit; resize: vertical; }
+    button.workspace-btn { border: none; border-radius: 14px; padding: 12px 16px; font: 700 14px/1 'Manrope', sans-serif; cursor: pointer; }
+    .primary { background: #1d4ed8; color: #fff; }
+    .secondary { background: #e8eef7; color: #173250; }
+    .danger { background: #b91c1c; color: #fff; }
+    .ghost { background: transparent; border: 1px solid #d7e0ea; color: #173250; }
+    @media (max-width: 1100px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .workspace-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { .summary-grid { grid-template-columns: 1fr; } .workspace-header, .panel-header, .row-head { flex-direction: column; align-items: start; } .detail-meta { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="admin-workspace">
+  <div class="workspace-shell">
+    <header class="workspace-header">
+      <div class="workspace-title">
+        <h1>Admin Workspace</h1>
+        <p>Review loan applications, verify documents, and keep borrower updates moving in real time.</p>
+      </div>
+      <div class="workspace-actions">
+        <button type="button" class="workspace-btn secondary" id="admin-refresh-btn">Refresh</button>
+        <button type="button" class="workspace-btn ghost" id="admin-logout-btn">Logout</button>
+      </div>
+    </header>
+
+    <section class="summary-grid">
+      <article class="summary-card"><span>Total applications</span><strong id="summary-total-applications">0</strong></article>
+      <article class="summary-card"><span>Pending review</span><strong id="summary-pending-review">0</strong></article>
+      <article class="summary-card"><span>Approved today</span><strong id="summary-approved-today">0</strong></article>
+      <article class="summary-card"><span>Active users</span><strong id="summary-active-users">0</strong></article>
+    </section>
+
+    <section class="workspace-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Applications</h2>
+          <span id="admin-session-name"></span>
+        </div>
+        <div class="applications-list" id="applications-list"></div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="panel">
+          <h2>Application Detail</h2>
+          <div id="application-detail-empty">Select a loan application to inspect documents, timeline, and next actions.</div>
+          <div id="application-detail" hidden>
+            <div class="detail-block">
+              <div class="row-head">
+                <div>
+                  <h3 id="detail-title">Application</h3>
+                  <p id="detail-subtitle"></p>
+                </div>
+                <span class="status-chip" id="detail-status">Submitted</span>
+              </div>
+              <div class="detail-meta" id="detail-meta"></div>
+              <div class="action-row">
+                <button type="button" class="workspace-btn secondary" data-status-action="under_review">Move To Review</button>
+                <button type="button" class="workspace-btn secondary" data-status-action="verification">Verification</button>
+                <button type="button" class="workspace-btn primary" data-status-action="approved">Approve</button>
+                <button type="button" class="workspace-btn secondary" data-status-action="disbursed">Disburse</button>
+                <button type="button" class="workspace-btn danger" data-status-action="rejected">Reject</button>
+              </div>
+            </div>
+
+            <div class="detail-block">
+              <h3>Verification Documents</h3>
+              <div class="detail-documents" id="detail-documents"></div>
+            </div>
+
+            <div class="detail-block">
+              <h3>Request Additional Documents</h3>
+              <form class="request-documents-form" id="request-documents-form">
+                <textarea name="message" placeholder="Explain exactly what the borrower should re-upload or clarify."></textarea>
+                <div class="action-row">
+                  <button type="submit" class="workspace-btn secondary">Send Request</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="detail-block">
+              <h3>Internal Notes</h3>
+              <form class="admin-note-form" id="admin-note-form">
+                <textarea name="message" placeholder="Add an internal review note for the operations trail."></textarea>
+                <div class="action-row">
+                  <button type="submit" class="workspace-btn ghost">Save Note</button>
+                </div>
+              </form>
+              <div class="detail-comments" id="detail-comments"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Borrowers</h2>
+          <div class="users-list" id="users-list"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Live Notifications</h2>
+          <div class="notifications-list" id="admin-notifications-list"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="frontend/js/api-client.js"></script>
+  <script src="frontend/js/auth-manager.js"></script>
+  <script src="frontend/js/realtime-client.js"></script>
+  <script src="frontend/js/utils/form-validator.js"></script>
+  <script src="frontend/js/utils/notifications.js"></script>
+  <script src="frontend/js/pages/admin-dashboard-page.js"></script>
+</body>
+</html>

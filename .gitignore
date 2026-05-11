@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.local
+npm-debug.log*
+backend/storage/
+backend/uploads/
+backend/backups/
+coverage/
+dist/
+*.sqlite
+*.log
