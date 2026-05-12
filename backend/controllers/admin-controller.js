@@ -9,12 +9,21 @@ const { createNotification } = require("../services/notification-service");
 const { emitToAccount, emitToRole } = require("../services/socket-bus");
 const { logAuditEvent } = require("../services/audit-service");
 const { getIpAddress } = require("../utils/http");
+const { AppError } = require("../utils/errors");
+const { CAPABILITIES, hasAdminCapability } = require("../utils/admin-roles");
+
+function requireCapability(account, capability) {
+  if (!hasAdminCapability(account, capability)) {
+    throw new AppError(403, "Your assigned admin role cannot perform this action.");
+  }
+}
 
 async function dashboard(req, res) {
+  requireCapability(req.auth, CAPABILITIES.DASHBOARD_VIEW);
   const [loans, users, notifications] = await Promise.all([
     getAllLoans(),
     listUsers(),
-    getNotificationsForAccount(req.auth.id, req.auth.role)
+    getNotificationsForAccount(req.auth.id, req.auth)
   ]);
 
   res.json({
@@ -31,11 +40,20 @@ async function dashboard(req, res) {
 }
 
 async function applications(req, res) {
+  requireCapability(req.auth, CAPABILITIES.APPLICATIONS_VIEW);
   const loans = await getAllLoans();
   res.json({ loans });
 }
 
 async function application(req, res) {
+  if (
+    !hasAdminCapability(req.auth, CAPABILITIES.APPLICATIONS_VIEW) &&
+    !hasAdminCapability(req.auth, CAPABILITIES.DOCUMENTS_VIEW) &&
+    !hasAdminCapability(req.auth, CAPABILITIES.DOCUMENTS_REQUEST) &&
+    !hasAdminCapability(req.auth, CAPABILITIES.COMMENTS_ADD)
+  ) {
+    throw new AppError(403, "Your assigned admin role cannot access application details.");
+  }
   const loan = await getLoanById(req.params.loanId);
   if (!loan) {
     return res.status(404).json({ error: "Loan application not found." });
@@ -53,6 +71,7 @@ async function application(req, res) {
 }
 
 async function reviewLoan(req, res) {
+  requireCapability(req.auth, CAPABILITIES.APPLICATIONS_UPDATE);
   const updated = await updateLoanStatus({
     actor: req.auth,
     loanId: req.params.loanId,
@@ -64,6 +83,7 @@ async function reviewLoan(req, res) {
 }
 
 async function verifyDocument(req, res) {
+  requireCapability(req.auth, CAPABILITIES.DOCUMENTS_REVIEW);
   const result = await query(
     `UPDATE documents
      SET status = $2, metadata = metadata || $3::jsonb
@@ -101,11 +121,13 @@ async function downloadDocument(req, res) {
 }
 
 async function users(req, res) {
+  requireCapability(req.auth, CAPABILITIES.BORROWERS_VIEW);
   const result = await listUsers();
   res.json({ users: result });
 }
 
 async function requestDocuments(req, res) {
+  requireCapability(req.auth, CAPABILITIES.DOCUMENTS_REQUEST);
   const loan = await getLoanById(req.params.loanId);
   if (!loan) {
     return res.status(404).json({ error: "Loan application not found." });
@@ -138,6 +160,7 @@ async function requestDocuments(req, res) {
 }
 
 async function addInternalComment(req, res) {
+  requireCapability(req.auth, CAPABILITIES.COMMENTS_ADD);
   const result = await query(
     `INSERT INTO application_comments (loan_application_id, author_account_id, visibility, message)
      VALUES ($1, $2, $3, $4)

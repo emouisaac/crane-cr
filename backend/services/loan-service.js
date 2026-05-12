@@ -6,6 +6,7 @@ const { getDeviceFingerprint, getIpAddress } = require("../utils/http");
 const { createNotification } = require("./notification-service");
 const { emitToAccount, emitToRole } = require("./socket-bus");
 const { logAuditEvent } = require("./audit-service");
+const { CAPABILITIES, hasAdminCapability } = require("../utils/admin-roles");
 
 async function detectDuplicateRisk({ userId, nationalId, phone, email, req }) {
   const flags = [];
@@ -193,6 +194,9 @@ async function updateLoanStatus({ actor, loanId, nextStatus, notes, req }) {
   const allowedStatuses = new Set(["submitted", "under_review", "verification", "approved", "disbursed", "rejected", "closed"]);
   if (!allowedStatuses.has(nextStatus)) {
     throw new AppError(400, "Invalid loan status.");
+  }
+  if (nextStatus === "approved" && !hasAdminCapability(actor, CAPABILITIES.LOANS_APPROVE)) {
+    throw new AppError(403, "Only a super admin can approve loans.");
   }
 
   return withTransaction(async (client) => {

@@ -2,7 +2,7 @@ const { query } = require("../config/database");
 
 async function findById(accountId) {
   const result = await query(
-    `SELECT id, role, full_name, email, phone, username, national_id, status, verification_status,
+    `SELECT id, role, admin_role, full_name, email, phone, username, national_id, status, verification_status,
             permissions, profile, last_login_at, created_at, updated_at
      FROM accounts
      WHERE id = $1`,
@@ -27,7 +27,7 @@ async function findAuthRecordByIdentifier({ email, phone, username }) {
 
 async function listAdmins() {
   const result = await query(
-    `SELECT id, role, full_name, email, phone, username, status, verification_status, permissions, last_login_at, created_at
+    `SELECT id, role, admin_role, full_name, email, phone, username, status, verification_status, permissions, last_login_at, created_at
      FROM accounts
      WHERE role IN ('admin', 'super_admin')
      ORDER BY created_at DESC`

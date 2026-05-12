@@ -15,6 +15,7 @@ function serializeAccount(account) {
   return {
     id: account.id,
     role: account.role,
+    adminRole: account.admin_role || null,
     fullName: account.full_name,
     email: account.email,
     phone: account.phone,
@@ -32,7 +33,7 @@ function serializeAccount(account) {
 
 async function respondWithSession(res, account, session) {
   setAuthCookies(res, session);
-  const notifications = await getNotificationsForAccount(account.id, account.role);
+  const notifications = await getNotificationsForAccount(account.id, account);
   res.json({
     account: serializeAccount(account),
     notifications
@@ -64,7 +65,7 @@ async function session(req, res) {
     return res.status(401).json({ error: "No active session." });
   }
 
-  const notifications = await getNotificationsForAccount(req.auth.id, req.auth.role);
+  const notifications = await getNotificationsForAccount(req.auth.id, req.auth);
   const activeSessions = await listActiveSessionsByAccount(req.auth.id);
   return res.json({
     account: serializeAccount(req.auth),

@@ -506,15 +506,6 @@
       </div>
     </div>
 
-    <button type="button" class="live-status-fab" aria-label="Live application updates" aria-live="polite">
-      <span class="live-status-indicator">
-        <span class="live-dot"></span>
-        LIVE
-      </span>
-      <span class="live-status-title">Checking for new applications...</span>
-      <span class="live-status-badge" style="display:none;">0</span>
-    </button>
-
     <div class="modal">
       <div class="modal-content">
         <div class="modal-header">
@@ -545,7 +536,7 @@
           <div class="profile-info">
             <div class="profile-title-row">
               <h3>Admin Account</h3>
-              <span class="profile-status-badge verified">Admin</span>
+              <span class="profile-status-badge verified" id="admin-role-badge">Admin</span>
             </div>
             <p class="profile-secondary-text">Loan operations management</p>
           </div>
@@ -553,7 +544,7 @@
         <div class="profile-summary-grid">
           <div class="profile-summary-card">
             <span>Role</span>
-            <strong>Admin</strong>
+            <strong id="admin-role-summary">Admin</strong>
           </div>
           <div class="profile-summary-card">
             <span>Status</span>

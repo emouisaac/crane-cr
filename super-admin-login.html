@@ -25,9 +25,10 @@
       background: white;
       border-radius: 12px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 420px;
-      padding: 40px;
+      width: min(100%, 360px);
+      max-width: 360px;
+      padding: clamp(18px, 4vw, 28px);
+      margin: auto;
       animation: slideUp 0.4s ease-out;
     }
 
@@ -110,6 +111,41 @@
     .btn-login:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    @media (max-width: 520px) {
+      .login-container {
+        max-width: 92vw;
+        padding: 16px 14px;
+      }
+
+      .login-header {
+        margin-bottom: 20px;
+      }
+
+      .login-header img {
+        width: 50px;
+        height: 50px;
+      }
+
+      .login-header h1 {
+        font-size: 1.7rem;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-group label,
+      .login-header p,
+      .login-footer p {
+        font-size: 0.92rem;
+      }
+
+      .form-group input,
+      .btn-login {
+        font-size: 0.95rem;
+      }
     }
 
     .login-footer {

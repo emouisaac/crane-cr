@@ -2398,6 +2398,7 @@ select {
   color: var(--dashboard-text);
 }
 .role-form-stack input,
+.role-form-stack select,
 .role-form-stack textarea {
   width: 100%;
   padding: 0.95rem 1rem;
@@ -2410,6 +2411,7 @@ select {
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 .role-form-stack input:focus,
+.role-form-stack select:focus,
 .role-form-stack textarea:focus {
   border-color: rgba(13, 139, 99, 0.28);
   box-shadow: 0 0 0 4px rgba(13, 139, 99, 0.08);
@@ -2423,6 +2425,20 @@ select {
 }
 .role-form-inline textarea {
   min-height: 112px;
+}
+.role-inline-select {
+  min-width: 180px;
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(13, 139, 99, 0.12);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--dashboard-text);
+  font: inherit;
+  outline: none;
+}
+.role-inline-select:focus {
+  border-color: rgba(13, 139, 99, 0.28);
+  box-shadow: 0 0 0 4px rgba(13, 139, 99, 0.08);
 }
 .role-dashboard-page .three-flex-card {
   background: transparent;

@@ -150,7 +150,7 @@ async function createUserAccount(payload, req) {
     const accountResult = await client.query(
       `INSERT INTO accounts (role, full_name, email, phone, pin_hash, profile)
        VALUES ('user', $1, $2, $3, $4, $5)
-       RETURNING id, role, full_name, email, phone, status, verification_status, permissions, profile, created_at, updated_at`,
+       RETURNING id, role, admin_role, full_name, email, phone, status, verification_status, permissions, profile, created_at, updated_at`,
       [fullName, email, phone, passwordHash, JSON.stringify({
         registrationIp: getIpAddress(req),
         fullName: fullName,
@@ -358,6 +358,7 @@ async function refreshSession(req) {
   const account = {
     id: row.account_id,
     role: row.role,
+    admin_role: row.admin_role,
     full_name: row.full_name,
     email: row.email,
     phone: row.phone,

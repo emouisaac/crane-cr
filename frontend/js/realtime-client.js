@@ -1,6 +1,16 @@
 (function bootstrapRealtime(global) {
   let socket = null;
-  const listeners = new Map();
+
+  function getLogoutPath() {
+    const pathname = global.location.pathname || "";
+    if (pathname.includes("super-admin")) {
+      return "super-admin-login.html";
+    }
+    if (pathname.includes("admin")) {
+      return "admin-login.html";
+    }
+    return "index.html";
+  }
 
   function connect() {
     if (socket || typeof global.io !== "function" || !global.CraneAuth.getAccount()) {
@@ -18,16 +28,19 @@
       "document:updated",
       "user:updated",
       "account:status",
+      "account:role",
       "session:revoked",
-      "admin:created"
+      "admin:created",
+      "admin:updated"
     ].forEach((eventName) => {
       socket.on(eventName, (payload) => {
+        global.dispatchEvent(new CustomEvent("crane:realtime:event", { detail: { eventName, payload } }));
         global.dispatchEvent(new CustomEvent(`crane:${eventName}`, { detail: payload }));
       });
     });
 
     socket.on("session:revoked", () => {
-      global.CraneAuth.logout(global.location.pathname.includes("admin") ? "login.html" : "index.html");
+      global.CraneAuth.logout(getLogoutPath());
     });
 
     return socket;

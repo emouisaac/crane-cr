@@ -5,6 +5,7 @@ const { env } = require("../config/env");
 const { findById } = require("../models/account-model");
 const { setIo } = require("../services/socket-bus");
 const { ACCESS_COOKIE } = require("../services/auth-service");
+const { getAudienceRolesForAccount } = require("../utils/admin-roles");
 
 function initializeRealtime(server) {
   const io = new Server(server, {
@@ -37,7 +38,9 @@ function initializeRealtime(server) {
   io.on("connection", (socket) => {
     const account = socket.auth.account;
     socket.join(`account:${account.id}`);
-    socket.join(`role:${account.role}`);
+    getAudienceRolesForAccount(account).forEach((audienceRole) => {
+      socket.join(`role:${audienceRole}`);
+    });
 
     socket.on("notifications:read", (notificationIds = []) => {
       socket.emit("notifications:ack", { notificationIds });

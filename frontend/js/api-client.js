@@ -113,6 +113,7 @@
     addAdminComment: (loanId, body) => request(`/admin/applications/${loanId}/comments`, { method: "POST", body }),
     superAdminDashboard: () => request("/super-admin/dashboard"),
     createAdmin: (body) => request("/super-admin/admins", { method: "POST", body }),
+    updateAdminRole: (accountId, adminRole) => request(`/super-admin/accounts/${accountId}/admin-role`, { method: "PATCH", body: { adminRole } }),
     updateAccountStatus: (accountId, status) => request(`/super-admin/accounts/${accountId}/status`, { method: "PATCH", body: { status } }),
     forceLogout: (accountId) => request(`/super-admin/accounts/${accountId}/force-logout`, { method: "POST" }),
     updatePermissions: (accountId, permissions) => request(`/super-admin/accounts/${accountId}/permissions`, { method: "PATCH", body: { permissions } }),

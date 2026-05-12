@@ -9,15 +9,16 @@ const { revokeAllSessionsForAccount } = require("../services/auth-service");
 const { emitToAccount, emitToRole } = require("../services/socket-bus");
 const { logAuditEvent } = require("../services/audit-service");
 const { AppError } = require("../utils/errors");
-const { normalizeEmail, normalizePhone, requiredText, sanitizeNullableString, validatePin } = require("../utils/validators");
+const { normalizeEmail, normalizePhone, requiredText, validatePin } = require("../utils/validators");
 const { getIpAddress } = require("../utils/http");
+const { getAdminRoleLabel, getDefaultPermissionsForAdminRole, normalizeAdminRole } = require("../utils/admin-roles");
 
 async function dashboard(req, res) {
   const [admins, users, loans, notifications, securityEvents, backups, settings] = await Promise.all([
     listAdmins(),
     listUsers(),
     getAllLoans(),
-    getNotificationsForAccount(req.auth.id, req.auth.role),
+    getNotificationsForAccount(req.auth.id, req.auth),
     query("SELECT * FROM security_events ORDER BY created_at DESC LIMIT 50"),
     listBackups(),
     query("SELECT * FROM app_settings ORDER BY key ASC")
@@ -41,15 +42,11 @@ async function dashboard(req, res) {
 }
 
 async function createAdmin(req, res) {
-  const role = String(req.body.role || "admin").trim().toLowerCase();
-  if (role !== "admin") {
-    throw new AppError(400, "Role must be admin.");
-  }
-
   const username = requiredText(req.body.username, "Username").toLowerCase();
   const fullName = requiredText(req.body.fullName, "Full name");
+  const adminRole = normalizeAdminRole(req.body.adminRole);
   const pinHash = await bcrypt.hash(validatePin(req.body.pin), 12);
-  const permissions = Array.isArray(req.body.permissions) ? req.body.permissions : [];
+  const permissions = getDefaultPermissionsForAdminRole(adminRole);
   const email = req.body.email ? normalizeEmail(req.body.email) : null;
   const phone = req.body.phone ? normalizePhone(req.body.phone) : null;
 
@@ -79,10 +76,10 @@ async function createAdmin(req, res) {
   let result;
   try {
     result = await query(
-      `INSERT INTO accounts (role, full_name, username, email, phone, pin_hash, permissions, verification_status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'verified')
-       RETURNING id, role, full_name, username, email, phone, status, permissions, created_at`,
-      [role, fullName, username, email, phone, pinHash, JSON.stringify(permissions)]
+      `INSERT INTO accounts (role, admin_role, full_name, username, email, phone, pin_hash, permissions, verification_status)
+       VALUES ('admin', $1, $2, $3, $4, $5, $6, $7, 'verified')
+       RETURNING id, role, admin_role, full_name, username, email, phone, status, permissions, created_at`,
+      [adminRole, fullName, username, email, phone, pinHash, JSON.stringify(permissions)]
     );
   } catch (error) {
     if (error.code === "23505") {
@@ -94,7 +91,7 @@ async function createAdmin(req, res) {
   await createNotification({
     audienceRole: "super_admin",
     title: "Admin created",
-    message: `${fullName} was created as an admin.`,
+    message: `${fullName} was created as ${getAdminRoleLabel(adminRole)}.`,
     eventType: "admin.created",
     payload: { adminId: result.rows[0].id }
   });
@@ -106,7 +103,7 @@ async function createAdmin(req, res) {
     entityType: "account",
     entityId: result.rows[0].id,
     ipAddress: getIpAddress(req),
-    metadata: { username, permissions }
+    metadata: { username, adminRole, permissions }
   });
   res.status(201).json({ admin: result.rows[0] });
 }
@@ -224,6 +221,47 @@ async function updatePermissions(req, res) {
   res.json({ account: result.rows[0] || null });
 }
 
+async function updateAdminRole(req, res) {
+  const adminRole = normalizeAdminRole(req.body.adminRole);
+  const permissions = getDefaultPermissionsForAdminRole(adminRole);
+  const result = await query(
+    `UPDATE accounts
+     SET admin_role = $2, permissions = $3, updated_at = NOW()
+     WHERE id = $1 AND role = 'admin'
+     RETURNING id, role, admin_role, full_name, username, email, phone, status, permissions, updated_at`,
+    [req.params.accountId, adminRole, JSON.stringify(permissions)]
+  );
+
+  const account = result.rows[0];
+  if (!account) {
+    throw new AppError(404, "Admin account not found.");
+  }
+
+  await createNotification({
+    recipientAccountId: account.id,
+    title: "Admin role updated",
+    message: `Your admin role is now ${getAdminRoleLabel(adminRole)}.`,
+    level: "info",
+    eventType: "account.role_changed",
+    payload: { accountId: account.id, adminRole }
+  });
+
+  emitToAccount(account.id, "account:role", account);
+  emitToRole("super_admin", "admin:updated", account);
+
+  await logAuditEvent({
+    actorAccountId: req.auth.id,
+    actorRole: req.auth.role,
+    action: "account.admin_role_updated",
+    entityType: "account",
+    entityId: account.id,
+    ipAddress: getIpAddress(req),
+    metadata: { adminRole, permissions }
+  });
+
+  res.json({ account });
+}
+
 module.exports = {
   admins,
   auditLogs,
@@ -235,6 +273,7 @@ module.exports = {
   setAccountStatus,
   triggerBackup,
   triggerRestore,
+  updateAdminRole,
   updatePermissions,
   updateSettings
 };

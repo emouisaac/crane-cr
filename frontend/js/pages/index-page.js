@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const loanForm = document.getElementById("loan-request-form");
   const feedback = document.querySelector(".submission-feedback");
   let dashboardData = null;
+  let dashboardRefreshTimer = null;
 
   function formatCurrency(value) {
     return new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(Number(value || 0));
@@ -89,6 +90,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (badgeEl) {
       badgeEl.style.display = "none";
     }
+  }
+
+  function describeRealtimeActivity(eventName, payload) {
+    switch (eventName) {
+      case "notification:new":
+        return payload?.title ? `${payload.title}: ${payload.message || "New activity detected."}` : "New notification detected.";
+      case "loan:created":
+        return payload?.application_code ? `Loan ${payload.application_code} was submitted.` : "A new loan request was submitted.";
+      case "loan:updated":
+        return payload?.application_code
+          ? `Loan ${payload.application_code} is now ${String(payload.status || "updated").replace(/_/g, " ")}.`
+          : "A loan application was updated.";
+      case "document:updated":
+        return payload?.document_type
+          ? `${String(payload.document_type).replace(/_/g, " ")} document was reviewed.`
+          : "A document update was received.";
+      case "user:updated":
+        return "Your account profile was updated.";
+      case "account:status":
+        return payload?.status ? `Account status changed to ${payload.status}.` : "Account status changed.";
+      case "account:role":
+        return "Admin role access was updated.";
+      default:
+        return "Live account activity detected.";
+    }
+  }
+
+  function scheduleDashboardRefresh(showToast = false) {
+    clearTimeout(dashboardRefreshTimer);
+    dashboardRefreshTimer = setTimeout(() => {
+      loadDashboard(showToast).catch((error) => {
+        window.CraneNotify.error(error.message || "Unable to refresh your dashboard.");
+      });
+    }, 120);
   }
 
   function setGuestMode() {
@@ -684,15 +719,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  window.addEventListener("crane:notification:new", () => loadDashboard());
-  window.addEventListener("crane:loan:updated", () => loadDashboard());
-  window.addEventListener("crane:document:updated", () => loadDashboard());
+  window.addEventListener("crane:realtime:event", (event) => {
+    const eventName = event.detail?.eventName;
+    const payload = event.detail?.payload;
+    const unreadCount = Number(document.querySelector(".notification-badge")?.textContent || "0");
+    updateLiveStatusFAB(describeRealtimeActivity(eventName, payload), unreadCount);
+  });
+
+  window.addEventListener("crane:notification:new", () => scheduleDashboardRefresh());
+  window.addEventListener("crane:loan:created", () => scheduleDashboardRefresh());
+  window.addEventListener("crane:loan:updated", () => scheduleDashboardRefresh());
+  window.addEventListener("crane:document:updated", () => scheduleDashboardRefresh());
+  window.addEventListener("crane:user:updated", () => scheduleDashboardRefresh());
   window.addEventListener("crane:account:status", (event) => {
     const status = event.detail?.status;
     if (status && status !== "active") {
       window.CraneNotify.warning(`Your account is now ${status}.`);
       window.CraneAuth.logout("index.html");
+      return;
     }
+    scheduleDashboardRefresh();
   });
 
   // Play intro animation first, then load dashboard

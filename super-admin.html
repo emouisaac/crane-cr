@@ -271,8 +271,17 @@
               </div>
             </div>
             <form class="role-form-stack" id="create-admin-form">
-              <label for="super-admin-role">Role</label>
-              <input id="super-admin-role" type="text" name="role" value="admin" readonly>
+              <label for="super-admin-role">Admin Role</label>
+              <select id="super-admin-role" name="adminRole" required>
+                <option value="manager">Manager</option>
+                <option value="secretary">Secretary</option>
+                <option value="loan_officer">Loan Officer</option>
+                <option value="contact_support">Contact Support</option>
+                <option value="analyst">Analyst</option>
+                <option value="compliance_officer">Compliance Officer</option>
+                <option value="recovery_officer">Recovery Officer</option>
+                <option value="cashier">Cashier</option>
+              </select>
               <label for="super-admin-full-name">Full Name</label>
               <input id="super-admin-full-name" type="text" name="fullName" placeholder="Full name" required>
               <label for="super-admin-username">Username</label>
@@ -283,8 +292,8 @@
               <input id="super-admin-phone" type="tel" name="phone" placeholder="+256...">
               <label for="super-admin-pin">PIN</label>
               <input id="super-admin-pin" type="password" name="pin" placeholder="6-digit PIN" maxlength="6" inputmode="numeric" pattern="\d{6}" required>
-              <label for="super-admin-permissions">Permissions</label>
-              <textarea id="super-admin-permissions" name="permissions" placeholder="Comma-separated permissions, e.g. loans:approve, users:view"></textarea>
+              <label for="super-admin-permissions">Role Access Preview</label>
+              <textarea id="super-admin-permissions" name="permissions" readonly></textarea>
               <button type="submit" class="button button-primary">Create Admin</button>
             </form>
           </article>
@@ -509,15 +518,6 @@
         <div class="panel-empty-state">No notifications yet. New alerts will appear here.</div>
       </div>
     </div>
-
-    <button type="button" class="live-status-fab" aria-label="Live system updates" aria-live="polite">
-      <span class="live-status-indicator">
-        <span class="live-dot"></span>
-        LIVE
-      </span>
-      <span class="live-status-title">Monitoring platform activity...</span>
-      <span class="live-status-badge" style="display:none;">0</span>
-    </button>
 
     <div class="modal">
       <div class="modal-content">

@@ -1,16 +1,41 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const viewOrder = ["overview", "admins", "users", "backups"];
   const sections = Array.from(document.querySelectorAll(".view-section"));
+  const viewSections = Object.fromEntries(viewOrder.map((view, index) => [view, sections[index]]));
   const navLinks = Array.from(document.querySelectorAll("[data-view]"));
   const sidebarOverlay = document.querySelector(".sidebar-overlay");
   const dashboardSidebar = document.querySelector(".dashboard-sidebar");
   const contactModal = document.querySelector(".contact-modal-overlay");
   const notificationPanel = document.querySelector(".notification-panel");
   const profilePanel = document.querySelector(".profile-panel");
-  const liveStatusFab = document.querySelector(".live-status-fab");
   const notificationBadge = document.querySelector(".notification-badge");
   const notificationDrawerList = document.querySelector(".notification-panel .notifications-list");
+  const roleField = document.getElementById("super-admin-role");
+  const permissionsPreview = document.getElementById("super-admin-permissions");
   let dashboard = null;
+  let refreshTimer = null;
+
+  const ADMIN_ROLE_OPTIONS = [
+    { value: "manager", label: "Manager" },
+    { value: "secretary", label: "Secretary" },
+    { value: "loan_officer", label: "Loan Officer" },
+    { value: "contact_support", label: "Contact Support" },
+    { value: "analyst", label: "Analyst" },
+    { value: "compliance_officer", label: "Compliance Officer" },
+    { value: "recovery_officer", label: "Recovery Officer" },
+    { value: "cashier", label: "Cashier" }
+  ];
+
+  const ADMIN_ROLE_DESCRIPTIONS = {
+    manager: "Full workspace access across applications, documents, borrowers, notes, and requests. Final loan approval still remains super-admin only.",
+    secretary: "Queue coordination, borrower visibility, internal notes, and document request follow-up.",
+    loan_officer: "Full workspace access across applications, documents, borrowers, notes, and requests. Final loan approval still remains super-admin only.",
+    contact_support: "Borrower support, internal notes, notifications, and document request communication.",
+    analyst: "Application review, borrower visibility, document verification, and operational analysis.",
+    compliance_officer: "Application and document compliance checks with notes and alert visibility.",
+    recovery_officer: "Borrower follow-up, notes, and operational notifications for recovery workflows.",
+    cashier: "Borrower visibility, queue awareness, and internal operational coordination."
+  };
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -22,10 +47,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function formatDateTime(value) {
-    if (!value) {
-      return "Unknown";
-    }
-    return new Date(value).toLocaleString();
+    return value ? new Date(value).toLocaleString() : "Unknown";
   }
 
   function formatStatus(status) {
@@ -41,6 +63,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function getAccountName(account) {
     return account?.fullName || account?.full_name || account?.username || "Super Admin";
+  }
+
+  function getAdminRoleLabel(adminRole) {
+    return ADMIN_ROLE_OPTIONS.find((option) => option.value === adminRole)?.label || "Manager";
+  }
+
+  function getAdminRoleDescription(adminRole) {
+    return ADMIN_ROLE_DESCRIPTIONS[adminRole] || ADMIN_ROLE_DESCRIPTIONS.manager;
   }
 
   function setText(selector, value) {
@@ -63,13 +93,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function setActiveView(viewName) {
-    const index = viewOrder.indexOf(viewName);
-    if (index === -1) {
+    if (!viewSections[viewName]) {
       return;
     }
 
-    sections.forEach((section, sectionIndex) => {
-      section.classList.toggle("active", sectionIndex === index);
+    Object.entries(viewSections).forEach(([view, section]) => {
+      section?.classList.toggle("active", view === viewName);
     });
 
     navLinks.forEach((link) => {
@@ -106,28 +135,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.querySelector(".profile-panel-overlay")?.classList.remove("active");
   }
 
-  function updateLiveStatus(title, count = 0) {
-    const titleNode = liveStatusFab?.querySelector(".live-status-title");
-    const badgeNode = liveStatusFab?.querySelector(".live-status-badge");
-
-    if (titleNode) {
-      titleNode.textContent = title;
-    }
-
-    if (badgeNode) {
-      if (count > 0) {
-        badgeNode.textContent = String(count);
-        badgeNode.style.display = "inline-flex";
-        liveStatusFab?.classList.add("has-unread");
-      } else {
-        badgeNode.style.display = "none";
-        liveStatusFab?.classList.remove("has-unread");
-      }
-    }
-  }
-
   function createEmptyState(message) {
     return `<div class="panel-empty-state">${escapeHtml(message)}</div>`;
+  }
+
+  function updateRoleAccessPreview() {
+    if (!permissionsPreview || !roleField) {
+      return;
+    }
+    permissionsPreview.value = getAdminRoleDescription(roleField.value);
   }
 
   function renderNotificationFeed(host, notifications, emptyMessage, limit = notifications.length) {
@@ -155,7 +171,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       : createEmptyState(emptyMessage);
   }
 
+  function buildRoleSelect(admin) {
+    const options = ADMIN_ROLE_OPTIONS.map((option) => `
+      <option value="${option.value}" ${option.value === admin.admin_role ? "selected" : ""}>${option.label}</option>
+    `).join("");
+
+    return `
+      <select class="role-inline-select" data-admin-role-select="${admin.id}" aria-label="Select admin role for ${escapeHtml(admin.full_name || "admin")}">
+        ${options}
+      </select>
+    `;
+  }
+
   function buildAdminCard(admin, includeActions = true) {
+    const roleLabel = admin.role === "super_admin" ? "Super Admin" : getAdminRoleLabel(admin.admin_role);
+    const roleDescription = admin.role === "super_admin"
+      ? "Platform-wide control, role changes, backups, settings, and approvals."
+      : getAdminRoleDescription(admin.admin_role);
+
     return `
       <article class="role-list-item">
         <div class="role-item-head">
@@ -167,12 +200,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>
         <div class="role-item-meta">
           <span>${escapeHtml(admin.phone || "No phone")}</span>
-          <span>${escapeHtml((admin.permissions || []).join(", ") || "Default permissions")}</span>
+          <span>${escapeHtml(roleLabel)}</span>
         </div>
+        <div class="role-list-note">${escapeHtml(roleDescription)}</div>
         ${
-          includeActions
+          includeActions && admin.role === "admin"
             ? `
               <div class="role-item-actions">
+                ${buildRoleSelect(admin)}
+                <button type="button" class="button button-secondary" data-save-admin-role="${admin.id}">Save Role</button>
                 <button type="button" class="button button-secondary" data-status-account="${admin.id}" data-status-value="${admin.status === "active" ? "disabled" : "active"}">${admin.status === "active" ? "Disable" : "Reactivate"}</button>
                 <button type="button" class="button role-action-danger" data-force-logout="${admin.id}">Force Logout</button>
               </div>
@@ -344,13 +380,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderNotificationFeed(document.getElementById("super-notifications-list"), notifications, "No platform alerts yet.", 6);
     renderNotificationFeed(notificationDrawerList, notifications, "No notifications yet. New alerts will appear here.", 10);
-
-    const latestSecurity = dashboard?.securityEvents?.[0];
-    if (latestSecurity) {
-      updateLiveStatus(`${formatStatus(latestSecurity.event_type)} detected`, unreadCount);
-    } else {
-      updateLiveStatus("Monitoring platform activity", unreadCount);
-    }
   }
 
   function renderProfile(account) {
@@ -398,12 +427,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  function scheduleDashboardRefresh(showToast = false) {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => {
+      loadDashboard(showToast).catch((error) => {
+        window.CraneNotify.error(error.message || "Unable to refresh the dashboard.");
+      });
+    }, 120);
+  }
+
   document.querySelectorAll("[data-view-trigger]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
-      const viewName = button.dataset.viewTrigger;
       closeSidebar();
-      setActiveView(viewName);
+      setActiveView(button.dataset.viewTrigger);
     });
   });
 
@@ -478,27 +515,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  roleField?.addEventListener("change", updateRoleAccessPreview);
+  updateRoleAccessPreview();
+
   document.getElementById("create-admin-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-    const permissions = form.elements.permissions.value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
 
     try {
       await window.CraneApi.createAdmin({
-        role: form.elements.role.value.trim().toLowerCase(),
+        adminRole: form.elements.adminRole.value,
         fullName: form.elements.fullName.value.trim(),
         username: form.elements.username.value.trim(),
         email: form.elements.email.value.trim(),
         phone: form.elements.phone.value.trim(),
-        pin: form.elements.pin.value.trim(),
-        permissions
+        pin: form.elements.pin.value.trim()
       });
 
       form.reset();
-      form.elements.role.value = "admin";
+      form.elements.adminRole.value = "manager";
+      updateRoleAccessPreview();
       window.CraneNotify.success("Admin account created.");
       await loadDashboard();
       setActiveView("admins");
@@ -508,6 +544,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.body.addEventListener("click", async (event) => {
+    const saveRoleButton = event.target.closest("[data-save-admin-role]");
+    if (saveRoleButton) {
+      const select = document.querySelector(`[data-admin-role-select="${saveRoleButton.dataset.saveAdminRole}"]`);
+      if (!select) {
+        return;
+      }
+      await window.CraneApi.updateAdminRole(saveRoleButton.dataset.saveAdminRole, select.value);
+      window.CraneNotify.success("Admin role updated.");
+      await loadDashboard();
+      return;
+    }
+
     const statusButton = event.target.closest("[data-status-account]");
     if (statusButton) {
       await window.CraneApi.updateAccountStatus(statusButton.dataset.statusAccount, statusButton.dataset.statusValue);
@@ -565,10 +613,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.CraneAuth.logout("super-admin-login.html");
   });
 
-  liveStatusFab?.addEventListener("click", () => {
-    setActiveView("users");
-  });
-
   document.addEventListener("click", (event) => {
     const menuItem = event.target.closest(".profile-menu-item");
     if (!menuItem) {
@@ -585,12 +629,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.CraneNotify.info("This account utility will be available soon.");
   });
 
-  window.addEventListener("crane:notification:new", () => loadDashboard());
-  window.addEventListener("crane:admin:created", () => loadDashboard());
-  window.addEventListener("crane:loan:created", () => loadDashboard());
-  window.addEventListener("crane:loan:updated", () => loadDashboard());
-  window.addEventListener("crane:document:updated", () => loadDashboard());
-  window.addEventListener("crane:account:status", () => loadDashboard());
+  window.addEventListener("crane:notification:new", () => scheduleDashboardRefresh());
+  window.addEventListener("crane:admin:created", () => scheduleDashboardRefresh());
+  window.addEventListener("crane:admin:updated", () => scheduleDashboardRefresh());
+  window.addEventListener("crane:loan:created", () => scheduleDashboardRefresh());
+  window.addEventListener("crane:loan:updated", () => scheduleDashboardRefresh());
+  window.addEventListener("crane:document:updated", () => scheduleDashboardRefresh());
+  window.addEventListener("crane:account:status", () => scheduleDashboardRefresh());
   window.addEventListener("crane:session:revoked", () => {
     window.CraneAuth.logout("super-admin-login.html");
   });
