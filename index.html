@@ -566,29 +566,12 @@
                   <input type="date" name="dateOfBirth" required>
                 </div>
                 <div class="form-group">
-                  <label>District</label>
-                  <select name="district" required>
-                    <option value="">Select district</option>
-                    <option value="kampala">Kampala</option>
-                    <option value="wakiso">Wakiso</option>
-                    <option value="mukono">Mukono</option>
-                    <option value="entebbe">Entebbe</option>
-                    <option value="masaka">Masaka</option>
-                    <option value="mbarara">Mbarara</option>
-                    <option value="fort_portal">Fort Portal</option>
-                    <option value="jinja">Jinja</option>
-                    <option value="soroti">Soroti</option>
-                    <option value="lira">Lira</option>
-                    <option value="gulu">Gulu</option>
-                    <option value="arua">Arua</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <label>District / City</label>
+                  <input type="text" name="district" list="uganda-districts" placeholder="Start typing your district or city" required>
                 </div>
                 <div class="form-group">
-                  <label>Subcounty / Division</label>
-                  <select name="subcounty" required>
-                    <option value="">Select subcounty</option>
-                  </select>
+                  <label id="address-subcounty-label">Subcounty / Division</label>
+                  <input type="text" name="subcounty" placeholder="e.g. Nakawa Division or Bardege-Layibi" required>
                 </div>
                 <div class="form-group">
                   <label>Zone / Village</label>
@@ -640,32 +623,32 @@
 
               <div class="section-subheading">Employment / business details</div>
               <div class="form-grid">
-                <div class="form-group employment-detail-group">
-                  <label>Employer / organization</label>
+                <div class="form-group employment-detail-group" data-category-group="employment">
+                  <label id="employment-name-label">Employer / organization</label>
                   <input type="text" name="employerName" placeholder="Company or agency name">
                 </div>
-                <div class="form-group employment-detail-group">
-                  <label>Position / grade</label>
+                <div class="form-group employment-detail-group" data-category-group="employment">
+                  <label id="employment-position-label">Position / grade</label>
                   <input type="text" name="positionGrade" placeholder="e.g. Sales officer">
                 </div>
-                <div class="form-group employment-detail-group">
-                  <label>Length of service</label>
+                <div class="form-group employment-detail-group" data-category-group="employment">
+                  <label id="employment-duration-label">Length of service</label>
                   <input type="text" name="lengthOfService" placeholder="e.g. 4 years">
                 </div>
-                <div class="form-group business-detail-group">
-                  <label>Business or service name</label>
+                <div class="form-group business-detail-group" data-category-group="business">
+                  <label id="business-name-label">Business or service name</label>
                   <input type="text" name="businessName" placeholder="Name of enterprise">
                 </div>
-                <div class="form-group business-detail-group">
-                  <label>Business / service category</label>
+                <div class="form-group business-detail-group" data-category-group="business">
+                  <label id="business-category-label">Business / service category</label>
                   <input type="text" name="businessCategory" placeholder="e.g. Retail, logistics, hospitality">
                 </div>
-                <div class="form-group business-detail-group">
-                  <label>Registration number</label>
+                <div class="form-group business-detail-group" data-category-group="business">
+                  <label id="business-registration-label">Registration number</label>
                   <input type="text" name="businessRegistrationNumber" placeholder="e.g. B12345/2025">
                 </div>
                 <div class="form-group">
-                  <label>Monthly net income</label>
+                  <label id="monthly-income-label">Monthly net income</label>
                   <input type="number" name="monthlyIncome" placeholder="UGX 1,500,000">
                 </div>
                 <div class="form-group">
@@ -697,12 +680,12 @@
                   <label>ID / passport back</label>
                   <input type="file" name="id_back" accept="image/*" capture="environment" required>
                 </div>
-                <div class="form-group">
-                  <label>Income proof</label>
+                <div class="form-group" data-document-group="income-proof">
+                  <label id="income-proof-label">Income proof</label>
                   <input type="file" name="income_proof" accept="image/*" capture="environment" required>
                 </div>
-                <div class="form-group">
-                  <label>Bank statement</label>
+                <div class="form-group" data-document-group="bank-statement">
+                  <label id="bank-statement-label">Bank statement</label>
                   <input type="file" name="bank_statement" accept="image/*" capture="environment">
                 </div>
                 <div class="form-group">
@@ -724,6 +707,148 @@
                 <span class="form-help-text">Status will be updated once admin review begins.</span>
               </div>
             </form>
+            <datalist id="uganda-districts">
+              <option value="Abim"></option>
+              <option value="Adjumani"></option>
+              <option value="Agago"></option>
+              <option value="Alebtong"></option>
+              <option value="Amolatar"></option>
+              <option value="Amudat"></option>
+              <option value="Amuria"></option>
+              <option value="Amuru"></option>
+              <option value="Apac"></option>
+              <option value="Arua"></option>
+              <option value="Arua City"></option>
+              <option value="Budaka"></option>
+              <option value="Bududa"></option>
+              <option value="Bugiri"></option>
+              <option value="Bugweri"></option>
+              <option value="Buhweju"></option>
+              <option value="Buikwe"></option>
+              <option value="Bukedea"></option>
+              <option value="Bukomansimbi"></option>
+              <option value="Bukwo"></option>
+              <option value="Bulambuli"></option>
+              <option value="Buliisa"></option>
+              <option value="Bundibugyo"></option>
+              <option value="Bunyangabu"></option>
+              <option value="Bushenyi"></option>
+              <option value="Busia"></option>
+              <option value="Butaleja"></option>
+              <option value="Butambala"></option>
+              <option value="Butebo"></option>
+              <option value="Buvuma"></option>
+              <option value="Buyende"></option>
+              <option value="Dokolo"></option>
+              <option value="Gomba"></option>
+              <option value="Gulu"></option>
+              <option value="Gulu City"></option>
+              <option value="Hoima"></option>
+              <option value="Hoima City"></option>
+              <option value="Ibanda"></option>
+              <option value="Iganga"></option>
+              <option value="Isingiro"></option>
+              <option value="Jinja"></option>
+              <option value="Jinja City"></option>
+              <option value="Kaabong"></option>
+              <option value="Kabale"></option>
+              <option value="Kabarole"></option>
+              <option value="Kaberamaido"></option>
+              <option value="Kagadi"></option>
+              <option value="Kakumiro"></option>
+              <option value="Kalaki"></option>
+              <option value="Kalangala"></option>
+              <option value="Kaliro"></option>
+              <option value="Kalungu"></option>
+              <option value="Kampala"></option>
+              <option value="Kapchorwa"></option>
+              <option value="Kapelebyong"></option>
+              <option value="Karenga"></option>
+              <option value="Kasanda"></option>
+              <option value="Kasese"></option>
+              <option value="Katakwi"></option>
+              <option value="Kayunga"></option>
+              <option value="Kazo"></option>
+              <option value="Kibaale"></option>
+              <option value="Kiboga"></option>
+              <option value="Kibuku"></option>
+              <option value="Kikuube"></option>
+              <option value="Kiruhura"></option>
+              <option value="Kiryandongo"></option>
+              <option value="Kisoro"></option>
+              <option value="Kitagwenda"></option>
+              <option value="Kitgum"></option>
+              <option value="Koboko"></option>
+              <option value="Kole"></option>
+              <option value="Kotido"></option>
+              <option value="Kumi"></option>
+              <option value="Kwania"></option>
+              <option value="Kween"></option>
+              <option value="Kyankwanzi"></option>
+              <option value="Kyegegwa"></option>
+              <option value="Kyenjojo"></option>
+              <option value="Kyotera"></option>
+              <option value="Lamwo"></option>
+              <option value="Lira"></option>
+              <option value="Lira City"></option>
+              <option value="Luuka"></option>
+              <option value="Luwero"></option>
+              <option value="Lwengo"></option>
+              <option value="Lyantonde"></option>
+              <option value="Madi-Okollo"></option>
+              <option value="Manafwa"></option>
+              <option value="Maracha"></option>
+              <option value="Masaka"></option>
+              <option value="Masaka City"></option>
+              <option value="Masindi"></option>
+              <option value="Mayuge"></option>
+              <option value="Mbale"></option>
+              <option value="Mbale City"></option>
+              <option value="Mbarara"></option>
+              <option value="Mbarara City"></option>
+              <option value="Mitooma"></option>
+              <option value="Mityana"></option>
+              <option value="Moroto"></option>
+              <option value="Moyo"></option>
+              <option value="Mpigi"></option>
+              <option value="Mubende"></option>
+              <option value="Mukono"></option>
+              <option value="Nabilatuk"></option>
+              <option value="Nakapiripirit"></option>
+              <option value="Nakaseke"></option>
+              <option value="Nakasongola"></option>
+              <option value="Namisindwa"></option>
+              <option value="Namutumba"></option>
+              <option value="Napak"></option>
+              <option value="Nebbi"></option>
+              <option value="Ngora"></option>
+              <option value="Ntoroko"></option>
+              <option value="Ntungamo"></option>
+              <option value="Nwoya"></option>
+              <option value="Obongi"></option>
+              <option value="Omoro"></option>
+              <option value="Otuke"></option>
+              <option value="Oyam"></option>
+              <option value="Pader"></option>
+              <option value="Pakwach"></option>
+              <option value="Pallisa"></option>
+              <option value="Rakai"></option>
+              <option value="Rubanda"></option>
+              <option value="Rubirizi"></option>
+              <option value="Rukiga"></option>
+              <option value="Rukungiri"></option>
+              <option value="Rwampara"></option>
+              <option value="Serere"></option>
+              <option value="Sheema"></option>
+              <option value="Sironko"></option>
+              <option value="Soroti"></option>
+              <option value="Soroti City"></option>
+              <option value="Terego"></option>
+              <option value="Tororo"></option>
+              <option value="Wakiso"></option>
+              <option value="Yumbe"></option>
+              <option value="Zombo"></option>
+            </datalist>
           </article>
 
           <article class="card loan-request-sidebar-card">
@@ -1275,6 +1400,7 @@
   <script src="frontend/js/api-client.js"></script>
   <script src="frontend/js/auth-manager.js"></script>
   <script src="frontend/js/realtime-client.js"></script>
+  <script src="frontend/js/utils/contact-actions.js"></script>
   <script src="frontend/js/utils/form-validator.js"></script>
   <script src="frontend/js/utils/notifications.js"></script>
   <script src="frontend/js/pages/index-page.js"></script>

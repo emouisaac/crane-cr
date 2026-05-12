@@ -148,10 +148,11 @@ async function requestDocuments(req, res) {
     payload: { loanId: loan.id }
   });
 
+  const followUpStatus = req.auth.role === "super_admin" ? "verification" : "under_review";
   await updateLoanStatus({
     actor: req.auth,
     loanId: loan.id,
-    nextStatus: "verification",
+    nextStatus: followUpStatus,
     notes: "Awaiting additional borrower documents.",
     req
   });

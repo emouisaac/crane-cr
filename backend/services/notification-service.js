@@ -2,6 +2,7 @@ const { query } = require("../config/database");
 const { emitToAccount, emitToRole } = require("./socket-bus");
 
 async function createNotification({
+  client = null,
   recipientAccountId = null,
   audienceRole = null,
   title,
@@ -10,7 +11,8 @@ async function createNotification({
   eventType,
   payload = {}
 }) {
-  const result = await query(
+  const executor = client || { query };
+  const result = await executor.query(
     `INSERT INTO notifications (recipient_account_id, audience_role, title, message, level, event_type, payload)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING *`,

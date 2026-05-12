@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  const viewOrder = ["overview", "admins", "users", "backups"];
+  const viewOrder = ["overview", "applications", "admins", "users", "backups"];
   const sections = Array.from(document.querySelectorAll(".view-section"));
   const viewSections = Object.fromEntries(viewOrder.map((view, index) => [view, sections[index]]));
   const navLinks = Array.from(document.querySelectorAll("[data-view]"));
@@ -14,6 +14,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const permissionsPreview = document.getElementById("super-admin-permissions");
   let dashboard = null;
   let refreshTimer = null;
+  let selectedLoanId = null;
+  let selectedLoanDetail = null;
 
   const ADMIN_ROLE_OPTIONS = [
     { value: "manager", label: "Manager" },
@@ -44,6 +46,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  function formatCurrency(value) {
+    return new Intl.NumberFormat("en-UG", {
+      style: "currency",
+      currency: "UGX",
+      maximumFractionDigits: 0
+    }).format(Number(value || 0));
   }
 
   function formatDateTime(value) {
@@ -306,6 +316,165 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("super-latest-backup-label").textContent = backups[0]?.file_name || "No backup yet";
   }
 
+  function buildApplicationItem(loan, isActive = false) {
+    return `
+      <button type="button" class="role-list-item is-interactive ${isActive ? "is-active" : ""}" data-super-loan-id="${loan.id}">
+        <div class="role-item-head">
+          <div>
+            <strong>${escapeHtml(loan.application_code)}</strong>
+            <div class="role-list-note">${escapeHtml(loan.user_name || "Unknown borrower")}</div>
+          </div>
+          <span class="role-chip ${statusTone(loan.status)}">${escapeHtml(formatStatus(loan.status))}</span>
+        </div>
+        <div class="role-item-meta">
+          <span>${escapeHtml(formatCurrency(loan.amount))}</span>
+          <span>${escapeHtml(`${loan.term_months} months`)}</span>
+          <span>${escapeHtml(formatStatus(loan.purpose || "general"))}</span>
+        </div>
+      </button>
+    `;
+  }
+
+  function renderApplications() {
+    const host = document.getElementById("super-applications-list");
+    const loans = dashboard?.loans || [];
+    if (!host) {
+      return;
+    }
+
+    host.innerHTML = loans.length
+      ? loans.map((loan) => buildApplicationItem(loan, selectedLoanId === loan.id)).join("")
+      : createEmptyState("No applications currently require a super admin decision.");
+  }
+
+  function clearLoanDetail() {
+    selectedLoanDetail = null;
+    document.getElementById("super-application-detail-empty").hidden = false;
+    document.getElementById("super-application-detail").hidden = true;
+    document.getElementById("super-detail-documents").innerHTML = createEmptyState("Choose an application from the list above to inspect its supporting documents.");
+    document.getElementById("super-detail-comments").innerHTML = createEmptyState("No super admin notes have been added yet.");
+    document.getElementById("super-documents-empty-state").hidden = false;
+    document.getElementById("super-documents-context").textContent = "Select an application first to inspect supporting files and approve or request re-uploads.";
+
+    ["super-request-documents-form", "super-note-form"].forEach((formId) => {
+      const form = document.getElementById(formId);
+      if (form) {
+        Array.from(form.elements).forEach((element) => {
+          element.disabled = true;
+        });
+      }
+    });
+  }
+
+  function renderSelectedLoanContext() {
+    if (!selectedLoanDetail?.loan) {
+      clearLoanDetail();
+      return;
+    }
+
+    const loan = selectedLoanDetail.loan;
+    document.getElementById("super-documents-context").textContent = `${loan.application_code} for ${loan.user_name || "borrower"} is open for super admin review, document follow-up, and final decision.`;
+  }
+
+  function renderLoanDetail() {
+    if (!selectedLoanDetail?.loan) {
+      clearLoanDetail();
+      return;
+    }
+
+    const { loan, documents, comments } = selectedLoanDetail;
+    document.getElementById("super-application-detail-empty").hidden = true;
+    document.getElementById("super-application-detail").hidden = false;
+    document.getElementById("super-detail-title").textContent = `${loan.application_code} - ${loan.user_name || "Borrower"}`;
+    document.getElementById("super-detail-subtitle").textContent = `${formatCurrency(loan.amount)} over ${loan.term_months} months`;
+
+    const statusNode = document.getElementById("super-detail-status");
+    statusNode.textContent = formatStatus(loan.status);
+    statusNode.className = `role-status-badge ${statusTone(loan.status)}`;
+
+    const address = loan.address_details || {};
+    document.getElementById("super-detail-meta").innerHTML = `
+      <div class="role-meta-card">
+        <span>Email</span>
+        <strong>${escapeHtml(loan.user_email || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Phone</span>
+        <strong>${escapeHtml(loan.user_phone || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Purpose</span>
+        <strong>${escapeHtml(formatStatus(loan.purpose || "general"))}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>District</span>
+        <strong>${escapeHtml(address.district || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Applicant Category</span>
+        <strong>${escapeHtml(formatStatus(loan.applicant_category || "general"))}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Duplicate Risk</span>
+        <strong>${escapeHtml(`${loan.duplicate_risk_score || 0}/100`)}</strong>
+      </div>
+    `;
+
+    document.getElementById("super-documents-empty-state").hidden = true;
+    document.getElementById("super-detail-documents").innerHTML = documents.length
+      ? documents
+          .map(
+            (doc) => `
+              <article class="role-list-item">
+                <div class="role-item-head">
+                  <div>
+                    <strong>${escapeHtml(formatStatus(doc.document_type))}</strong>
+                    <div class="role-list-note">Sharpness ${escapeHtml(Number(doc.sharpness_score || 0).toFixed(1))}</div>
+                  </div>
+                  <span class="role-chip ${statusTone(doc.status)}">${escapeHtml(formatStatus(doc.status))}</span>
+                </div>
+                <div class="role-item-actions">
+                  <a class="button button-secondary" href="/api/admin/documents/${doc.id}/file" target="_blank" rel="noopener noreferrer">Open File</a>
+                  <button type="button" class="button button-primary" data-super-document-id="${doc.id}" data-super-document-status="verified">Verify</button>
+                  <button type="button" class="button role-action-danger" data-super-document-id="${doc.id}" data-super-document-status="rejected">Reject</button>
+                </div>
+              </article>
+            `
+          )
+          .join("")
+      : createEmptyState("No documents uploaded yet.");
+
+    document.getElementById("super-detail-comments").innerHTML = comments.length
+      ? comments
+          .map(
+            (comment) => `
+              <article class="role-list-item">
+                <div class="role-item-head">
+                  <div>
+                    <strong>${escapeHtml(comment.author_name || "Unknown author")}</strong>
+                    <div class="role-list-note">${escapeHtml(comment.author_role || "system")} - ${escapeHtml(formatDateTime(comment.created_at))}</div>
+                  </div>
+                  <span class="role-chip ${comment.visibility === "internal" ? "info" : "warning"}">${escapeHtml(comment.visibility || "internal")}</span>
+                </div>
+                <div class="role-list-note">${escapeHtml(comment.message || "")}</div>
+              </article>
+            `
+          )
+          .join("")
+      : createEmptyState("No super admin notes have been added yet.");
+
+    ["super-request-documents-form", "super-note-form"].forEach((formId) => {
+      const form = document.getElementById(formId);
+      if (form) {
+        Array.from(form.elements).forEach((element) => {
+          element.disabled = false;
+        });
+      }
+    });
+
+    renderSelectedLoanContext();
+  }
+
   async function renderAudit() {
     const auditResponse = await window.CraneApi.request("/super-admin/audit-logs");
     const logs = auditResponse.logs || [];
@@ -414,6 +583,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadDashboard(showToast = false) {
     dashboard = await window.CraneApi.superAdminDashboard();
     renderSummary();
+    renderApplications();
     renderAdmins();
     renderUsers();
     renderSecurity();
@@ -421,6 +591,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderNotifications();
     populateSettings();
     await renderAudit();
+
+    if (selectedLoanId && dashboard.loans.some((loan) => loan.id === selectedLoanId)) {
+      await fetchLoanDetail(selectedLoanId);
+    } else {
+      clearLoanDetail();
+      selectedLoanId = null;
+      renderApplications();
+    }
 
     if (showToast) {
       window.CraneNotify.success("Dashboard refreshed.");
@@ -435,6 +613,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }, 120);
   }
+
+  async function fetchLoanDetail(loanId) {
+    selectedLoanId = loanId;
+    renderApplications();
+    selectedLoanDetail = await window.CraneApi.adminApplication(loanId);
+    renderLoanDetail();
+  }
+
+  window.CraneContactActions?.bind?.();
 
   document.querySelectorAll("[data-view-trigger]").forEach((button) => {
     button.addEventListener("click", (event) => {
@@ -582,6 +769,93 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.CraneNotify.warning("Backup restore completed.");
       await loadDashboard();
     }
+  });
+
+  document.getElementById("super-applications-list").addEventListener("click", async (event) => {
+    const trigger = event.target.closest("[data-super-loan-id]");
+    if (!trigger) {
+      return;
+    }
+    await fetchLoanDetail(trigger.dataset.superLoanId);
+  });
+
+  document.getElementById("super-application-detail").addEventListener("click", async (event) => {
+    const requestDocumentsButton = event.target.closest("[data-super-open-request-documents]");
+    if (requestDocumentsButton) {
+      const requestField = document.getElementById("super-request-documents-message");
+      requestField?.focus();
+      requestField?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    const statusButton = event.target.closest("[data-super-status-action]");
+    if (!statusButton || !selectedLoanId) {
+      return;
+    }
+
+    const notes = window.prompt("Optional super admin note:", "") || "";
+    await window.CraneApi.updateLoanStatus(selectedLoanId, {
+      status: statusButton.dataset.superStatusAction,
+      notes
+    });
+    window.CraneNotify.success(
+      statusButton.dataset.superStatusAction === "approved"
+        ? "Loan approved successfully."
+        : "Application status updated."
+    );
+    await loadDashboard();
+  });
+
+  document.getElementById("super-detail-documents").addEventListener("click", async (event) => {
+    const documentButton = event.target.closest("[data-super-document-id]");
+    if (!documentButton || !selectedLoanId) {
+      return;
+    }
+
+    const notes = window.prompt("Document review note:", "") || "";
+    await window.CraneApi.verifyDocument(documentButton.dataset.superDocumentId, {
+      status: documentButton.dataset.superDocumentStatus,
+      notes
+    });
+    window.CraneNotify.success("Document review updated.");
+    await fetchLoanDetail(selectedLoanId);
+    await loadDashboard();
+  });
+
+  document.getElementById("super-request-documents-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!selectedLoanId) {
+      window.CraneNotify.info("Select an application first.");
+      return;
+    }
+
+    const message = event.currentTarget.elements.message.value.trim();
+    if (!message) {
+      return;
+    }
+
+    await window.CraneApi.requestDocuments(selectedLoanId, { message });
+    event.currentTarget.reset();
+    window.CraneNotify.success("Borrower notified.");
+    await loadDashboard();
+  });
+
+  document.getElementById("super-note-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!selectedLoanId) {
+      window.CraneNotify.info("Select an application first.");
+      return;
+    }
+
+    const message = event.currentTarget.elements.message.value.trim();
+    if (!message) {
+      return;
+    }
+
+    await window.CraneApi.addAdminComment(selectedLoanId, { message, visibility: "internal" });
+    event.currentTarget.reset();
+    window.CraneNotify.success("Super admin note saved.");
+    await fetchLoanDetail(selectedLoanId);
   });
 
   document.getElementById("settings-form").addEventListener("submit", async (event) => {

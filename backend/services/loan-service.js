@@ -8,6 +8,114 @@ const { emitToAccount, emitToRole } = require("./socket-bus");
 const { logAuditEvent } = require("./audit-service");
 const { CAPABILITIES, hasAdminCapability } = require("../utils/admin-roles");
 
+const PROCESSING_LOAN_STATUSES = new Set(["submitted", "under_review", "verification"]);
+const EXISTING_LOAN_STATUSES = new Set(["approved", "disbursed"]);
+const REAPPLICATION_COOLDOWN_DAYS = 7;
+const eligibilityDateFormatter = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "long",
+  timeZone: "UTC"
+});
+
+function addDays(dateValue, days) {
+  const date = new Date(dateValue);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date;
+}
+
+function formatEligibilityDate(dateValue) {
+  return eligibilityDateFormatter.format(new Date(dateValue));
+}
+
+function describeLoanApplicationBlock(loans = []) {
+  const processingLoan = loans.find((loan) => PROCESSING_LOAN_STATUSES.has(loan.status));
+  if (processingLoan) {
+    return {
+      statusCode: 409,
+      message: processingLoan.application_code
+        ? `Loan ${processingLoan.application_code} is still being processed.`
+        : "You already have a loan request being processed."
+    };
+  }
+
+  const existingLoan = loans.find((loan) => EXISTING_LOAN_STATUSES.has(loan.status));
+  if (existingLoan) {
+    return {
+      statusCode: 409,
+      message: existingLoan.application_code
+        ? `Loan ${existingLoan.application_code} is still active. Complete it before applying again.`
+        : "You already have an active loan. Complete it before applying again."
+    };
+  }
+
+  const latestRejectedLoan = loans.find((loan) => loan.status === "rejected");
+  if (!latestRejectedLoan) {
+    return null;
+  }
+
+  const rejectedAt = latestRejectedLoan.closed_at || latestRejectedLoan.updated_at || latestRejectedLoan.submitted_at;
+  if (!rejectedAt) {
+    return null;
+  }
+
+  const eligibleAt = addDays(rejectedAt, REAPPLICATION_COOLDOWN_DAYS);
+  if (eligibleAt > new Date()) {
+    return {
+      statusCode: 409,
+      message: latestRejectedLoan.application_code
+        ? `Loan ${latestRejectedLoan.application_code} was rejected. You can apply again on ${formatEligibilityDate(eligibleAt)}.`
+        : `Your last loan request was rejected. You can apply again on ${formatEligibilityDate(eligibleAt)}.`
+    };
+  }
+
+  return null;
+}
+
+async function assertLoanApplicationAllowed(client, userId) {
+  const accountResult = await client.query(
+    `SELECT status
+     FROM accounts
+     WHERE id = $1
+     FOR UPDATE`,
+    [userId]
+  );
+  const account = accountResult.rows[0];
+  if (!account) {
+    throw new AppError(404, "Account not found.");
+  }
+  if (account.status === "suspended") {
+    throw new AppError(403, "Your account is suspended. Contact support to restore loan access.");
+  }
+  if (account.status !== "active") {
+    throw new AppError(403, "Your account is not active. Contact support.");
+  }
+
+  const existingLoansResult = await client.query(
+    `SELECT application_code, status, submitted_at, updated_at, closed_at
+     FROM loan_applications
+     WHERE user_id = $1
+     ORDER BY submitted_at DESC
+     FOR UPDATE`,
+    [userId]
+  );
+
+  const block = describeLoanApplicationBlock(existingLoansResult.rows);
+  if (block) {
+    throw new AppError(block.statusCode, block.message);
+  }
+}
+
+async function resolveLoanApplicationConflict(userId) {
+  const existingLoansResult = await query(
+    `SELECT application_code, status, submitted_at, updated_at, closed_at
+     FROM loan_applications
+     WHERE user_id = $1
+     ORDER BY submitted_at DESC`,
+    [userId]
+  );
+  const block = describeLoanApplicationBlock(existingLoansResult.rows);
+  return block ? new AppError(block.statusCode, block.message) : new AppError(409, "A conflicting loan request already exists for this account.");
+}
+
 async function detectDuplicateRisk({ userId, nationalId, phone, email, req }) {
   const flags = [];
   const fingerprintHash = hashValue(getDeviceFingerprint(req));
@@ -79,115 +187,123 @@ async function submitLoanApplication({ user, body, req }) {
   const nationalId = requiredText(body.nationalId, "National ID / passport number");
   const duplicateRisk = await detectDuplicateRisk({ userId: user.id, nationalId, phone, email, req });
 
-  return withTransaction(async (client) => {
-    await client.query(
-      `UPDATE accounts
-       SET full_name = $2, email = COALESCE($3, email), phone = COALESCE($4, phone), national_id = $5,
-           profile = profile || $6::jsonb, updated_at = NOW()
-       WHERE id = $1`,
-      [
-        user.id,
-        requiredText(body.fullName || user.full_name, "Full name"),
-        email,
-        phone,
-        nationalId,
-        JSON.stringify({
-          dateOfBirth: body.dateOfBirth || null,
-          district: body.district || null,
-          subcounty: body.subcounty || null,
-          village: body.village || null
-        })
-      ]
-    );
+  try {
+    return await withTransaction(async (client) => {
+      await assertLoanApplicationAllowed(client, user.id);
 
-    const result = await client.query(
-      `INSERT INTO loan_applications
-        (application_code, user_id, amount, term_months, purpose, applicant_category, monthly_income, other_monthly_income,
-         existing_obligations, employment_details, address_details, duplicate_risk_score, duplicate_risk_flags)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-       RETURNING *`,
-      [
-        generateApplicationCode(),
-        user.id,
-        amount,
-        termMonths,
-        requiredText(body.loanPurpose, "Loan purpose"),
-        requiredText(body.applicantCategory, "Applicant category"),
-        body.monthlyIncome ? positiveAmount(body.monthlyIncome, "Monthly income") : null,
-        body.otherMonthlyIncome ? positiveAmount(body.otherMonthlyIncome, "Other monthly income") : null,
-        sanitizeNullableString(body.existingObligations),
-        JSON.stringify({
-          employerName: sanitizeNullableString(body.employerName),
-          positionGrade: sanitizeNullableString(body.positionGrade),
-          lengthOfService: sanitizeNullableString(body.lengthOfService),
-          businessName: sanitizeNullableString(body.businessName),
-          businessCategory: sanitizeNullableString(body.businessCategory),
-          businessRegistrationNumber: sanitizeNullableString(body.businessRegistrationNumber)
-        }),
-        JSON.stringify({
-          district: sanitizeNullableString(body.district),
-          subcounty: sanitizeNullableString(body.subcounty),
-          village: sanitizeNullableString(body.village),
-          dateOfBirth: body.dateOfBirth || null
-        }),
-        duplicateRisk.score,
-        JSON.stringify(duplicateRisk.flags)
-      ]
-    );
+      await client.query(
+        `UPDATE accounts
+         SET full_name = $2, email = COALESCE($3, email), phone = COALESCE($4, phone), national_id = $5,
+             profile = profile || $6::jsonb, updated_at = NOW()
+         WHERE id = $1`,
+        [
+          user.id,
+          requiredText(body.fullName || user.full_name, "Full name"),
+          email,
+          phone,
+          nationalId,
+          JSON.stringify({
+            dateOfBirth: body.dateOfBirth || null,
+            district: body.district || null,
+            subcounty: body.subcounty || null,
+            village: body.village || null
+          })
+        ]
+      );
 
-    const loan = result.rows[0];
-    await client.query(
-      `INSERT INTO loan_status_history (loan_application_id, changed_by_account_id, from_status, to_status, notes)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [loan.id, user.id, null, "submitted", "Application submitted by borrower"]
-    );
+      const result = await client.query(
+        `INSERT INTO loan_applications
+          (application_code, user_id, amount, term_months, purpose, applicant_category, monthly_income, other_monthly_income,
+           existing_obligations, employment_details, address_details, duplicate_risk_score, duplicate_risk_flags)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         RETURNING *`,
+        [
+          generateApplicationCode(),
+          user.id,
+          amount,
+          termMonths,
+          requiredText(body.loanPurpose, "Loan purpose"),
+          requiredText(body.applicantCategory, "Applicant category"),
+          body.monthlyIncome ? positiveAmount(body.monthlyIncome, "Monthly income") : null,
+          body.otherMonthlyIncome ? positiveAmount(body.otherMonthlyIncome, "Other monthly income") : null,
+          sanitizeNullableString(body.existingObligations),
+          JSON.stringify({
+            employerName: sanitizeNullableString(body.employerName),
+            positionGrade: sanitizeNullableString(body.positionGrade),
+            lengthOfService: sanitizeNullableString(body.lengthOfService),
+            businessName: sanitizeNullableString(body.businessName),
+            businessCategory: sanitizeNullableString(body.businessCategory),
+            businessRegistrationNumber: sanitizeNullableString(body.businessRegistrationNumber)
+          }),
+          JSON.stringify({
+            district: sanitizeNullableString(body.district),
+            subcounty: sanitizeNullableString(body.subcounty),
+            village: sanitizeNullableString(body.village),
+            dateOfBirth: body.dateOfBirth || null
+          }),
+          duplicateRisk.score,
+          JSON.stringify(duplicateRisk.flags)
+        ]
+      );
 
-    await createNotification({
-      recipientAccountId: user.id,
-      title: "Loan application submitted",
-      message: `Your request ${loan.application_code} has been received and is awaiting review.`,
-      level: "success",
-      eventType: "loan.submitted",
-      payload: { loanId: loan.id, applicationCode: loan.application_code }
+      const loan = result.rows[0];
+      await client.query(
+        `INSERT INTO loan_status_history (loan_application_id, changed_by_account_id, from_status, to_status, notes)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [loan.id, user.id, null, "submitted", "Application submitted by borrower"]
+      );
+
+      await createNotification({
+        client,
+        recipientAccountId: user.id,
+        title: "Loan application submitted",
+        message: `Your request ${loan.application_code} has been received and is awaiting review.`,
+        level: "success",
+        eventType: "loan.submitted",
+        payload: { loanId: loan.id, applicationCode: loan.application_code }
+      });
+      await createNotification({
+        client,
+        audienceRole: "admin",
+        title: "New loan application",
+        message: `${user.full_name} submitted ${loan.application_code} for review.`,
+        level: "info",
+        eventType: "loan.submitted",
+        payload: { loanId: loan.id, applicationCode: loan.application_code, userId: user.id }
+      });
+      await createNotification({
+        client,
+        audienceRole: "super_admin",
+        title: "New loan application",
+        message: `${user.full_name} submitted ${loan.application_code}.`,
+        level: "info",
+        eventType: "loan.submitted",
+        payload: { loanId: loan.id, applicationCode: loan.application_code, userId: user.id }
+      });
+
+      emitToRole("admin", "loan:created", loan);
+      emitToRole("super_admin", "loan:created", loan);
+      emitToAccount(user.id, "loan:updated", loan);
+
+      await logAuditEvent({
+        client,
+        actorAccountId: user.id,
+        actorRole: user.role,
+        action: "loan.submitted",
+        entityType: "loan_application",
+        entityId: loan.id,
+        ipAddress: getIpAddress(req),
+        metadata: { applicationCode: loan.application_code, duplicateRisk }
+      });
+
+      return loan;
     });
-    await createNotification({
-      audienceRole: "admin",
-      title: "New loan application",
-      message: `${user.full_name} submitted ${loan.application_code} for review.`,
-      level: "info",
-      eventType: "loan.submitted",
-      payload: { loanId: loan.id, applicationCode: loan.application_code, userId: user.id }
-    });
-    await createNotification({
-      audienceRole: "super_admin",
-      title: "New loan application",
-      message: `${user.full_name} submitted ${loan.application_code}.`,
-      level: "info",
-      eventType: "loan.submitted",
-      payload: { loanId: loan.id, applicationCode: loan.application_code, userId: user.id }
-    });
-
-    emitToRole("admin", "loan:created", loan);
-    emitToRole("super_admin", "loan:created", loan);
-    emitToAccount(user.id, "loan:updated", loan);
-
-    await logAuditEvent({
-      actorAccountId: user.id,
-      actorRole: user.role,
-      action: "loan.submitted",
-      entityType: "loan_application",
-      entityId: loan.id,
-      ipAddress: getIpAddress(req),
-      metadata: { applicationCode: loan.application_code, duplicateRisk }
-    });
-
-    return loan;
-  }).catch((error) => {
-    if (error.code === "23505") {
-      throw new AppError(409, "You already have an active loan request being processed.");
+  } catch (error) {
+    if (error.code === "23505" && error.constraint === "idx_single_active_loan_request") {
+      throw await resolveLoanApplicationConflict(user.id);
     }
     throw error;
-  });
+  }
 }
 
 async function updateLoanStatus({ actor, loanId, nextStatus, notes, req }) {
@@ -223,6 +339,7 @@ async function updateLoanStatus({ actor, loanId, nextStatus, notes, req }) {
     );
 
     await createNotification({
+      client,
       recipientAccountId: loan.user_id,
       title: "Loan status updated",
       message: `Your application ${loan.application_code} is now ${nextStatus.replace(/_/g, " ")}.`,
@@ -236,6 +353,7 @@ async function updateLoanStatus({ actor, loanId, nextStatus, notes, req }) {
     emitToRole("admin", "loan:updated", updated);
 
     await logAuditEvent({
+      client,
       actorAccountId: actor.id,
       actorRole: actor.role,
       action: "loan.status_changed",

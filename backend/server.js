@@ -24,6 +24,22 @@ function ensureStorageDirectories() {
   });
 }
 
+function resolveRoleRedirect(req, loginPage, allowedRoles) {
+  if (!req.auth) {
+    return loginPage;
+  }
+  if (allowedRoles.includes(req.auth.role)) {
+    return null;
+  }
+  if (req.auth.role === "super_admin") {
+    return "/super-admin.html";
+  }
+  if (req.auth.role === "admin") {
+    return "/admin.html";
+  }
+  return loginPage;
+}
+
 function createApp() {
   const app = express();
 
@@ -82,10 +98,32 @@ function createApp() {
   app.get("/", (_req, res) => res.sendFile(path.join(env.rootDir, "index.html")));
   app.get("/index.html", (_req, res) => res.sendFile(path.join(env.rootDir, "index.html")));
   app.get("/login.html", (_req, res) => res.sendFile(path.join(env.rootDir, "login.html")));
-  app.get("/admin.html", (_req, res) => res.sendFile(path.join(env.rootDir, "admin.html")));
-  app.get("/admin-login.html", (_req, res) => res.sendFile(path.join(env.rootDir, "admin-login.html")));
-  app.get("/super-admin.html", (_req, res) => res.sendFile(path.join(env.rootDir, "super-admin.html")));
-  app.get("/super-admin-login.html", (_req, res) => res.sendFile(path.join(env.rootDir, "super-admin-login.html")));
+  app.get("/admin.html", (req, res) => {
+    const redirectTarget = resolveRoleRedirect(req, "/admin-login.html", ["admin", "super_admin"]);
+    if (redirectTarget) {
+      return res.redirect(302, redirectTarget);
+    }
+    return res.sendFile(path.join(env.rootDir, "admin.html"));
+  });
+  app.get("/admin-login.html", (req, res) => {
+    const redirectTarget = req.auth?.role === "admin" ? "/admin.html" : null;
+    if (redirectTarget) {
+      return res.redirect(302, redirectTarget);
+    }
+    return res.sendFile(path.join(env.rootDir, "admin-login.html"));
+  });
+  app.get("/super-admin.html", (req, res) => {
+    if (req.auth?.role !== "super_admin") {
+      return res.redirect(302, "/super-admin-login.html");
+    }
+    return res.sendFile(path.join(env.rootDir, "super-admin.html"));
+  });
+  app.get("/super-admin-login.html", (req, res) => {
+    if (req.auth?.role === "super_admin") {
+      return res.redirect(302, "/super-admin.html");
+    }
+    return res.sendFile(path.join(env.rootDir, "super-admin-login.html"));
+  });
 
   app.use(errorHandler);
 

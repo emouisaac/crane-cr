@@ -3,6 +3,7 @@ const { env } = require("../config/env");
 const { AppError } = require("../utils/errors");
 const { ACCESS_COOKIE } = require("../services/auth-service");
 const { findById } = require("../models/account-model");
+const { query } = require("../config/database");
 
 async function attachAuth(req, _res, next) {
   try {
@@ -13,6 +14,20 @@ async function attachAuth(req, _res, next) {
     }
 
     const payload = jwt.verify(token, env.jwtAccessSecret);
+    const sessionResult = await query(
+      `SELECT id
+       FROM sessions
+       WHERE id = $1
+         AND revoked_at IS NULL
+         AND expires_at > NOW()
+       LIMIT 1`,
+      [payload.sessionId]
+    );
+    if (sessionResult.rowCount === 0) {
+      req.auth = null;
+      return next();
+    }
+
     const account = await findById(payload.sub);
     if (!account || account.status !== "active") {
       req.auth = null;

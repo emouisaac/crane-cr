@@ -32,11 +32,100 @@ document.addEventListener("DOMContentLoaded", async () => {
   const registerForm = document.getElementById("user-register-form");
   const loanForm = document.getElementById("loan-request-form");
   const feedback = document.querySelector(".submission-feedback");
+  const loanSubmitButton = loanForm?.querySelector('button[type="submit"]');
+  const loanHelpText = loanForm?.querySelector(".form-help-text");
   let dashboardData = null;
   let dashboardRefreshTimer = null;
+  const processingLoanStatuses = new Set(["submitted", "under_review", "verification"]);
+  const existingLoanStatuses = new Set(["approved", "disbursed"]);
+  const liveLoanStatuses = new Set([...processingLoanStatuses, ...existingLoanStatuses]);
+  const reapplicationDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
+  const defaultLoanHelpText = "Status will be updated once admin review begins.";
 
   function formatCurrency(value) {
     return new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(Number(value || 0));
+  }
+
+  function addDays(dateValue, days) {
+    const date = new Date(dateValue);
+    date.setDate(date.getDate() + days);
+    return date;
+  }
+
+  function getLoanApplicationAccessState(account, loans = []) {
+    if (account?.status && account.status !== "active") {
+      return {
+        canApply: false,
+        message: "Your account is suspended. Contact support to restore loan access."
+      };
+    }
+
+    const processingLoan = loans.find((loan) => processingLoanStatuses.has(loan.status));
+    if (processingLoan) {
+      return {
+        canApply: false,
+        message: processingLoan.application_code
+          ? `Loan ${processingLoan.application_code} is still being processed.`
+          : "You already have a loan request being processed."
+      };
+    }
+
+    const existingLoan = loans.find((loan) => existingLoanStatuses.has(loan.status));
+    if (existingLoan) {
+      return {
+        canApply: false,
+        message: existingLoan.application_code
+          ? `Loan ${existingLoan.application_code} is still active. Complete it before applying again.`
+          : "You already have an active loan. Complete it before applying again."
+      };
+    }
+
+    const latestRejectedLoan = loans.find((loan) => loan.status === "rejected");
+    if (latestRejectedLoan) {
+      const rejectedAt = latestRejectedLoan.closed_at || latestRejectedLoan.updated_at || latestRejectedLoan.submitted_at;
+      if (rejectedAt) {
+        const eligibleAt = addDays(rejectedAt, 7);
+        if (eligibleAt > new Date()) {
+          return {
+            canApply: false,
+            message: latestRejectedLoan.application_code
+              ? `Loan ${latestRejectedLoan.application_code} was rejected. You can apply again on ${reapplicationDateFormatter.format(eligibleAt)}.`
+              : `Your last loan request was rejected. You can apply again on ${reapplicationDateFormatter.format(eligibleAt)}.`
+          };
+        }
+      }
+    }
+
+    return { canApply: true, message: "" };
+  }
+
+  function updateLoanApplicationAvailability(account, loans = []) {
+    if (!loanSubmitButton) {
+      return;
+    }
+
+    const accessState = getLoanApplicationAccessState(account, loans);
+    loanSubmitButton.disabled = !accessState.canApply;
+    loanSubmitButton.textContent = accessState.canApply ? "Submit request" : "Application unavailable";
+
+    if (loanHelpText) {
+      loanHelpText.textContent = accessState.canApply ? defaultLoanHelpText : accessState.message;
+    }
+
+    if (!feedback) {
+      return;
+    }
+
+    if (accessState.canApply) {
+      if (feedback.dataset.lockReason) {
+        feedback.textContent = "";
+        delete feedback.dataset.lockReason;
+      }
+      return;
+    }
+
+    feedback.textContent = accessState.message;
+    feedback.dataset.lockReason = accessState.message;
   }
 
   function setActiveView(viewName) {
@@ -126,11 +215,135 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 120);
   }
 
+  const cityDistrictNames = new Set([
+    "kampala",
+    "arua city",
+    "gulu city",
+    "hoima city",
+    "jinja city",
+    "lira city",
+    "masaka city",
+    "mbale city",
+    "mbarara city",
+    "soroti city",
+    "fort portal city"
+  ]);
+
+  function setGroupVisibility(groups, shouldShow, requiredFields = []) {
+    groups.forEach((group) => {
+      group.hidden = !shouldShow;
+      group.querySelectorAll("input, select, textarea").forEach((field) => {
+        const isRequired = shouldShow && requiredFields.includes(field.name);
+        field.disabled = !shouldShow;
+        field.required = isRequired;
+        if (!shouldShow) {
+          field.value = "";
+        }
+      });
+    });
+  }
+
+  function setFieldRequired(field, required) {
+    if (!field) {
+      return;
+    }
+    field.required = required;
+    field.disabled = false;
+  }
+
+  function setDocumentRequirement(groupName, { required, label, hint }) {
+    const group = loanForm?.querySelector(`[data-document-group="${groupName}"]`);
+    const input = group?.querySelector('input[type="file"]');
+    const labelNode = group?.querySelector("label");
+    if (!group || !input || !labelNode) {
+      return;
+    }
+
+    input.required = required;
+    labelNode.textContent = required ? `${label}${hint ? ` (${hint})` : ""}` : label;
+  }
+
+  function updateAddressLabel() {
+    if (!loanForm) {
+      return;
+    }
+
+    const districtValue = String(loanForm.elements.district?.value || "").trim().toLowerCase();
+    const isCityAddress = cityDistrictNames.has(districtValue) || districtValue.includes(" city");
+    const labelNode = document.getElementById("address-subcounty-label");
+    const subcountyField = loanForm.elements.subcounty;
+
+    if (labelNode) {
+      labelNode.textContent = isCityAddress ? "Division / Ward" : "Subcounty / Town council";
+    }
+    if (subcountyField) {
+      subcountyField.placeholder = isCityAddress
+        ? "e.g. Nakawa Division or Central Ward"
+        : "e.g. Bardege-Layibi or Nyendo-Mukungwe";
+    }
+  }
+
+  function updateLoanApplicationRules() {
+    if (!loanForm) {
+      return;
+    }
+
+    const category = loanForm.elements.applicantCategory?.value || "";
+    const amount = Number(loanForm.elements.amount?.value || 0);
+    const employmentGroups = Array.from(loanForm.querySelectorAll('[data-category-group="employment"]'));
+    const businessGroups = Array.from(loanForm.querySelectorAll('[data-category-group="business"]'));
+    const monthlyIncomeLabel = document.getElementById("monthly-income-label");
+
+    const isEmploymentCategory = ["employee", "civil_servant"].includes(category);
+    const isBusinessCategory = ["self_employed", "service_provider"].includes(category);
+    const isOtherCategory = category === "other";
+
+    setGroupVisibility(employmentGroups, isEmploymentCategory, [
+      "employerName",
+      "positionGrade",
+      "lengthOfService"
+    ]);
+    setGroupVisibility(businessGroups, isBusinessCategory, [
+      "businessName",
+      "businessCategory",
+      ...(category === "self_employed" ? ["businessRegistrationNumber"] : [])
+    ]);
+
+    if (monthlyIncomeLabel) {
+      monthlyIncomeLabel.textContent = isEmploymentCategory
+        ? "Monthly net salary"
+        : isBusinessCategory
+        ? "Average monthly business income"
+        : "Average monthly income";
+    }
+
+    setFieldRequired(loanForm.elements.monthlyIncome, true);
+
+    setDocumentRequirement("income-proof", {
+      required: true,
+      label: isEmploymentCategory
+        ? "Payslip / appointment letter"
+        : isBusinessCategory
+        ? "Business income proof"
+        : "Income proof",
+      hint: isOtherCategory ? "supporting evidence accepted" : ""
+    });
+
+    setDocumentRequirement("bank-statement", {
+      required: isBusinessCategory || isOtherCategory || amount >= 3000000,
+      label: "Bank statement",
+      hint: amount >= 3000000 ? "required for this amount range" : ""
+    });
+
+    updateAddressLabel();
+  }
+
   function setGuestMode() {
     document.querySelector(".welcome-text h1 span").textContent = "Guest";
     document.querySelector(".loan-balance-amount").textContent = "UGX 0";
     document.querySelector(".notification-badge").textContent = "0";
     document.querySelector(".snapshot-badge").textContent = "Awaiting sign in";
+    updateLoanApplicationAvailability(null, []);
     document.querySelectorAll('[data-action="open-login"]').forEach((item) => {
       const labelNode = item.querySelector("span");
       if (labelNode) {
@@ -145,10 +358,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  window.CraneContactActions?.bind?.();
+
   function renderLoans(loans) {
     const loansList = document.querySelector(".loans-list");
     const loansDetailList = document.querySelector(".loans-detail-list");
-    const activeLoans = loans.filter((loan) => ["submitted", "under_review", "verification", "approved", "disbursed"].includes(loan.status));
+    const activeLoans = loans.filter((loan) => liveLoanStatuses.has(loan.status));
 
     loansList.innerHTML = activeLoans.length
       ? activeLoans
@@ -197,7 +412,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const account = data.profile;
     const loans = data.loans || [];
     const notifications = data.notifications || [];
-    const activeLoans = loans.filter((loan) => ["submitted", "under_review", "verification", "approved", "disbursed"].includes(loan.status));
+    const activeLoans = loans.filter((loan) => liveLoanStatuses.has(loan.status));
     const nextDue = activeLoans[0]?.updated_at ? new Date(activeLoans[0].updated_at).toLocaleDateString() : "Not scheduled";
     const scoreValue = Math.min(760, 520 + activeLoans.length * 28 + (account.verification_status === "verified" ? 70 : 0));
 
@@ -215,6 +430,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderLoans(loans);
     renderNotifications(notifications);
+    updateLoanApplicationAvailability(account, loans);
 
     let statusMessage = "Checking your loan application status…";
     if (activeLoans.length > 0) {
@@ -298,7 +514,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const creditScoreField = document.querySelectorAll(".profile-summary-card strong")[2];
     if (creditScoreField && dashboardData) {
       const loans = dashboardData.loans || [];
-      const activeLoans = loans.filter((loan) => ["submitted", "under_review", "verification", "approved", "disbursed"].includes(loan.status));
+      const activeLoans = loans.filter((loan) => liveLoanStatuses.has(loan.status));
       const scoreValue = Math.min(760, 520 + activeLoans.length * 28 + (account.verificationStatus === "verified" ? 70 : 0));
       creditScoreField.textContent = String(scoreValue);
     }
@@ -331,7 +547,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Add loan summary information if dashboard data is available
     if (dashboardData) {
       const loans = dashboardData.loans || [];
-      const activeLoans = loans.filter((loan) => ["submitted", "under_review", "verification", "approved", "disbursed"].includes(loan.status));
+      const activeLoans = loans.filter((loan) => liveLoanStatuses.has(loan.status));
       const totalLoans = loans.length;
       const outstandingBalance = dashboardData.summary?.outstandingBalance || 0;
 
@@ -677,13 +893,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   loanForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!window.CraneAuth.getAccount()) {
+    const account = window.CraneAuth.getAccount();
+    if (!account) {
       window.CraneNotify.warning("Please sign in before submitting a loan request.");
       openModal(false);
       return;
     }
 
+    const accessState = getLoanApplicationAccessState(account, dashboardData?.loans || []);
+    if (!accessState.canApply) {
+      feedback.textContent = accessState.message;
+      feedback.dataset.lockReason = accessState.message;
+      window.CraneNotify.warning(accessState.message);
+      return;
+    }
+
     feedback.textContent = "Submitting application...";
+    delete feedback.dataset.lockReason;
     const formData = new FormData(loanForm);
     const payload = {};
     for (const [key, value] of formData.entries()) {
@@ -693,8 +919,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       payload[key] = value;
     }
 
+    let createdLoan = null;
     try {
       const { loan } = await window.CraneApi.applyLoan(payload);
+      createdLoan = loan;
       const documentInputs = Array.from(loanForm.querySelectorAll('input[type="file"]'));
       for (const input of documentInputs) {
         const files = Array.from(input.files || []);
@@ -709,11 +937,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       loanForm.reset();
+      updateLoanApplicationRules();
       feedback.textContent = `Application ${loan.application_code} submitted successfully.`;
       window.CraneNotify.success("Loan request submitted.");
       setActiveView("loans");
       await loadDashboard();
     } catch (error) {
+      if (createdLoan) {
+        feedback.textContent = `Application ${createdLoan.application_code} was submitted, but one or more document uploads failed.`;
+        window.CraneNotify.warning("The loan request was created, but some documents still need attention.");
+        setActiveView("loans");
+        await loadDashboard();
+        return;
+      }
       feedback.textContent = error.message || "Unable to submit loan request.";
       window.CraneNotify.error(error.message || "Submission failed.");
     }
@@ -740,6 +976,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     scheduleDashboardRefresh();
   });
+
+  loanForm?.elements?.applicantCategory?.addEventListener("change", updateLoanApplicationRules);
+  loanForm?.elements?.amount?.addEventListener("input", updateLoanApplicationRules);
+  loanForm?.elements?.district?.addEventListener("input", updateLoanApplicationRules);
+  updateLoanApplicationRules();
 
   // Play intro animation first, then load dashboard
   await playIntroAnimation();

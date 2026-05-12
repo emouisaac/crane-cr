@@ -29,6 +29,7 @@
       </button>
       <nav class="header-nav">
         <a href="#" class="nav-link active" data-view="overview">Dashboard</a>
+        <a href="#" class="nav-link" data-view="applications">Applications</a>
         <a href="#" class="nav-link" data-view="admins">Admins</a>
         <a href="#" class="nav-link" data-view="users">Users</a>
         <a href="#" class="nav-link" data-view="backups">Backups</a>
@@ -79,6 +80,13 @@
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
           <span>Admins</span>
+        </a>
+        <a href="#" class="menu-item" data-view="applications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+          </svg>
+          <span>Applications</span>
         </a>
         <a href="#" class="menu-item" data-view="users">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -186,6 +194,18 @@
 
           <article class="card three-flex-card role-span-full">
             <div class="flex-row">
+              <button type="button" class="flex-box" data-view-trigger="applications" aria-label="Open application management">
+                <div class="flex-box-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                    <polyline points="13 2 13 9 20 9"></polyline>
+                  </svg>
+                </div>
+                <div class="flex-box-content">
+                  <span class="flex-box-label">Applications</span>
+                  <strong class="flex-box-value" data-super-live-applications>0</strong>
+                </div>
+              </button>
               <button type="button" class="flex-box" data-view-trigger="admins" aria-label="Open admin management">
                 <div class="flex-box-icon" aria-hidden="true">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -248,6 +268,97 @@
               </div>
             </div>
             <div class="role-data-list" id="super-notifications-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-section">
+        <div class="dashboard-grid role-dashboard-grid">
+          <article class="card loan-request-intro-card role-span-full">
+            <div class="section-heading">
+              <div>
+                <h2>Super admin application workspace</h2>
+                <p class="section-subtitle">Review escalated files, request more documents, and approve or reject applications in real time.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="card role-span-5">
+            <div class="section-heading">
+              <div>
+                <h2>Loan applications</h2>
+                <p class="section-subtitle">Live applications across the full platform.</p>
+              </div>
+            </div>
+            <div class="role-data-list" id="super-applications-list"></div>
+          </article>
+
+          <article class="card role-span-7">
+            <div class="section-heading">
+              <div>
+                <h2>Application details</h2>
+                <p class="section-subtitle">Open a live application to review, request more documents, or approve it.</p>
+              </div>
+            </div>
+            <div class="panel-empty-state" id="super-application-detail-empty">Select a loan application to review the borrower, uploaded documents, and approval actions.</div>
+            <div id="super-application-detail" hidden>
+              <div class="role-detail-card">
+                <div class="role-detail-header">
+                  <div>
+                    <h3 id="super-detail-title">Application</h3>
+                    <p id="super-detail-subtitle">Choose an item from the queue.</p>
+                  </div>
+                  <span class="role-status-badge" id="super-detail-status">Submitted</span>
+                </div>
+                <div class="role-meta-grid" id="super-detail-meta"></div>
+                <div class="role-action-row">
+                  <button type="button" class="button button-secondary role-action-button" data-super-status-action="under_review">Move To Review</button>
+                  <button type="button" class="button button-secondary role-action-button" data-super-open-request-documents>Add More Documents</button>
+                  <button type="button" class="button button-primary role-action-button" data-super-status-action="approved">Approve Loan</button>
+                  <button type="button" class="button role-action-button role-action-danger" data-super-status-action="rejected">Reject</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card role-span-7">
+            <div class="section-heading">
+              <div>
+                <h2>Verification documents</h2>
+                <p class="section-subtitle" id="super-documents-context">Select an application first to inspect supporting files and approve or request re-uploads.</p>
+              </div>
+            </div>
+            <div class="panel-empty-state" id="super-documents-empty-state">Choose an application from the list above to load its supporting documents.</div>
+            <div class="role-data-list" id="super-detail-documents"></div>
+          </article>
+
+          <article class="card role-span-5">
+            <div class="section-heading">
+              <div>
+                <h2>Request documents</h2>
+                <p class="section-subtitle">Send the borrower a precise request for more documents or corrections.</p>
+              </div>
+            </div>
+            <form class="role-form-stack" id="super-request-documents-form">
+              <label for="super-request-documents-message">Message</label>
+              <textarea id="super-request-documents-message" name="message" placeholder="Explain what the borrower needs to re-upload or clarify."></textarea>
+              <button type="submit" class="button button-secondary">Send Request</button>
+            </form>
+          </article>
+
+          <article class="card role-span-full">
+            <div class="section-heading">
+              <div>
+                <h2>Super admin notes</h2>
+                <p class="section-subtitle">Keep a high-level decision trail on escalated applications.</p>
+              </div>
+            </div>
+            <form class="role-form-stack role-form-inline" id="super-note-form">
+              <label for="super-note-message">Note</label>
+              <textarea id="super-note-message" name="message" placeholder="Add a super admin note for this application."></textarea>
+              <button type="submit" class="button button-secondary">Save Note</button>
+            </form>
+            <div class="role-data-list" id="super-detail-comments"></div>
           </article>
         </div>
       </section>
@@ -491,6 +602,12 @@
             <path d="M5 9.5V21h14V9.5"></path>
           </svg>
         </button>
+        <button type="button" class="footer-box" aria-label="Applications" data-view-trigger="applications">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+          </svg>
+        </button>
         <button type="button" class="footer-box" aria-label="Users" data-view-trigger="users">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -616,6 +733,7 @@
   <script src="frontend/js/api-client.js"></script>
   <script src="frontend/js/auth-manager.js"></script>
   <script src="frontend/js/realtime-client.js"></script>
+  <script src="frontend/js/utils/contact-actions.js"></script>
   <script src="frontend/js/utils/form-validator.js"></script>
   <script src="frontend/js/utils/notifications.js"></script>
   <script src="frontend/js/pages/super-admin-dashboard-page.js"></script>

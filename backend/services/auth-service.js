@@ -236,6 +236,7 @@ async function loginUser(payload, req) {
     await client.query("UPDATE accounts SET last_login_at = NOW() WHERE id = $1", [account.id]);
     const session = await createSession(client, req, account);
     await logAuditEvent({
+      client,
       actorAccountId: account.id,
       actorRole: account.role,
       action: "auth.login",

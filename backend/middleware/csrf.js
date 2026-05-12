@@ -3,6 +3,14 @@ const { env } = require("../config/env");
 const { AppError } = require("../utils/errors");
 const { hashValue } = require("../utils/crypto");
 
+const SESSION_OPTIONAL_CSRF_PATHS = new Set([
+  "/auth/register",
+  "/auth/login",
+  "/auth/admin/login",
+  "/auth/super-admin/login",
+  "/auth/refresh"
+]);
+
 async function verifyCsrf(req, _res, next) {
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     return next();
@@ -12,6 +20,10 @@ async function verifyCsrf(req, _res, next) {
   const headerToken = req.headers["x-csrf-token"];
   if (!cookieToken || !headerToken || cookieToken !== headerToken) {
     return next(new AppError(403, "CSRF validation failed."));
+  }
+
+  if (SESSION_OPTIONAL_CSRF_PATHS.has(req.path)) {
+    return next();
   }
 
   if (req.auth?.sessionId) {

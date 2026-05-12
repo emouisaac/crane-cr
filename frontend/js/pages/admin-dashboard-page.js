@@ -375,6 +375,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function updateActionAccess() {
+    const hasSelectedLoan = Boolean(selectedLoanDetail?.loan);
     const canUpdateStatuses = hasCapability(CAPABILITIES.APPLICATIONS_UPDATE);
     const canApprove = hasCapability(CAPABILITIES.LOANS_APPROVE);
     const canReviewDocuments = hasCapability(CAPABILITIES.DOCUMENTS_REVIEW);
@@ -383,16 +384,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.querySelectorAll("[data-status-action]").forEach((button) => {
       const isApprove = button.dataset.statusAction === "approved";
-      button.hidden = isApprove ? !canApprove : !canUpdateStatuses;
-      button.disabled = isApprove ? !canApprove : !canUpdateStatuses;
+      const isAllowed = isApprove ? canApprove : canUpdateStatuses;
+      button.hidden = !isAllowed;
+      button.disabled = !isAllowed || !hasSelectedLoan;
       if (isApprove && !canApprove) {
         button.title = "Only a super admin can approve loans.";
+      } else if (!hasSelectedLoan) {
+        button.title = "Select an application first.";
+      } else {
+        button.title = "";
       }
+    });
+
+    document.querySelectorAll("[data-open-request-documents]").forEach((button) => {
+      button.hidden = !canRequestDocuments;
+      button.disabled = !canRequestDocuments || !hasSelectedLoan;
+      button.title = !hasSelectedLoan ? "Select an application first." : "";
     });
 
     document.querySelectorAll("#detail-documents [data-document-id]").forEach((button) => {
       button.hidden = !canReviewDocuments;
-      button.disabled = !canReviewDocuments;
+      button.disabled = !canReviewDocuments || !hasSelectedLoan;
     });
 
     const requestForm = document.getElementById("request-documents-form");
@@ -401,14 +413,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (requestForm) {
       requestForm.hidden = !canRequestDocuments;
       Array.from(requestForm.elements).forEach((element) => {
-        element.disabled = !canRequestDocuments;
+        element.disabled = !canRequestDocuments || !hasSelectedLoan;
       });
     }
 
     if (noteForm) {
       noteForm.hidden = !canAddComments;
       Array.from(noteForm.elements).forEach((element) => {
-        element.disabled = !canAddComments;
+        element.disabled = !canAddComments || !hasSelectedLoan;
       });
     }
   }
@@ -611,6 +623,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 120);
   }
 
+  window.CraneContactActions?.bind?.();
+
   document.querySelectorAll("[data-view-trigger]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
@@ -708,6 +722,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.getElementById("application-detail").addEventListener("click", async (event) => {
+    const requestDocumentsButton = event.target.closest("[data-open-request-documents]");
+    if (requestDocumentsButton) {
+      if (requestDocumentsButton.disabled) {
+        return;
+      }
+      setActiveView("documents");
+      const requestField = document.getElementById("admin-request-documents-message");
+      window.setTimeout(() => {
+        requestField?.focus();
+        requestField?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 60);
+      return;
+    }
+
     const statusButton = event.target.closest("[data-status-action]");
     if (statusButton && selectedLoanId) {
       if (statusButton.disabled) {
