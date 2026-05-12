@@ -568,17 +568,17 @@ select {
   border-radius: var(--radius-md);
   backdrop-filter: blur(10px);
 }
-.detail-row {
+.offer-details .detail-row {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
-.detail-label {
+.offer-details .detail-label {
   font-size: 0.75rem;
   opacity: 0.8;
   text-transform: uppercase;
 }
-.detail-value {
+.offer-details .detail-value {
   font-size: 1rem;
   font-weight: 700;
 }
@@ -896,7 +896,6 @@ select {
 .overview-card,
 .log-card,
 .architecture-card,
-.offer-card,
 .panel,
 .ocr-card,
 .timeline-item {
@@ -904,15 +903,13 @@ select {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
 }
-.metric-card span,
-.offer-card span {
+.metric-card span {
   display: block;
   margin-bottom: 0.4rem;
   color: var(--muted);
   font-size: 0.92rem;
 }
-.metric-card strong,
-.offer-card strong {
+.metric-card strong {
   font-size: 1.1rem;
 }
 .status-pill,
@@ -993,7 +990,6 @@ select {
   font-family: "Space Grotesk", sans-serif;
   font-size: 2.2rem;
 }
-.offer-card,
 .panel {
   padding: 1rem;
 }
@@ -1414,7 +1410,6 @@ select {
 .profile-status-badge.unverified {
   background: rgba(237, 63, 63, 0.1);
   color: #dc3f3f;
-}
 }
 .profile-info p {
   margin: 0.35rem 0 0;
@@ -2840,10 +2835,11 @@ body.super-admin-dashboard-page {
   color: var(--dashboard-text);
   margin: 0;
 }
-@media (max-width: 1280px) {#overview-view .dashboard-grid {
+@media (max-width: 1280px) {
+  #overview-view .dashboard-grid {
     grid-template-columns: repeat(8, minmax(0, 1fr));
   }
-#overview-view .marketing-pulse-card,
+  #overview-view .marketing-pulse-card,
   #overview-view .offer-stack-card,
   #overview-view .professional-score-card,
   #overview-view .quick-actions-card,
@@ -2854,7 +2850,8 @@ body.super-admin-dashboard-page {
   .role-span-7,
   .role-span-5 {
     grid-column: span 4;
-  }}
+  }
+}
 .text-button {
   background: none;
   border: none;
@@ -3654,9 +3651,10 @@ body.super-admin-dashboard-page {
   }
 .modal-footer {
     gap: 0.75rem;
-  }}
+  }
+}
 @media (max-width: 768px) {
-.dashboard-header {
+  .dashboard-header {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem;
@@ -3757,32 +3755,34 @@ body.super-admin-dashboard-page {
 .dashboard-sidebar.active {
     transform: translateX(0);
   }
-#overview-view .dashboard-grid {
+  #overview-view .dashboard-grid {
     gap: 0.9rem;
   }
-#overview-view .section-heading {
+  #overview-view .section-heading {
     gap: 0.75rem;
-  }}
-@media (max-width: 640px) {:root {
+  }
+}
+@media (max-width: 640px) {
+  :root {
     --dashboard-radius: 12px;
     --dashboard-radius-sm: 8px;
   }
-.app-shell {
+  .app-shell {
     width: min(calc(100% - 1rem), 1400px);
     padding: 0.75rem 0.5rem 0.75rem;
   }
-.dashboard-header {
+  .dashboard-header {
     top: 0.5rem;
     padding: 0.75rem;
   }
-.mobile-search-btn {
+  .mobile-search-btn {
     display: flex;
   }
-.header-brand {
+  .header-brand {
     gap: 0.55rem;
     font-size: 0.95rem;
   }
-.logo-icon,
+  .logo-icon,
   .user-avatar,
   .icon-btn,
   .menu-toggle,
@@ -3790,118 +3790,119 @@ body.super-admin-dashboard-page {
     width: 38px;
     height: 38px;
   }
-.dashboard-grid {
+  .dashboard-grid {
     gap: 0.75rem;
   }
-.dashboard-content .card {
+  .dashboard-content .card {
     padding: 1rem;
   }
-.marketing-copy h1 {
+  .marketing-copy h1 {
     font-size: 1.95rem;
   }
-.hero-subtext,
+  .hero-subtext,
   .offer-message {
     font-size: 0.9rem;
   }
-.stats-header h1 {
+  .stats-header h1 {
     font-size: 1.6rem;
   }
-.actions-grid,
+  .actions-grid,
   .payment-methods {
     grid-template-columns: repeat(4, 1fr);
     gap: 0.5rem;
   }
-.payment-method {
+  .payment-method {
     padding: 0.75rem 0.25rem;
     gap: 0.4rem;
   }
-.method-logo {
+  .method-logo {
     width: 36px;
     height: 36px;
   }
-.payment-method span {
+  .payment-method span {
     font-size: 0.65rem;
   }
-.notification-panel {
+  .notification-panel {
     width: 100%;
   }
-.dashboard-sidebar {
+  .dashboard-sidebar {
     width: min(280px, calc(100vw - 1rem));
   }
-#overview-view .marketing-copy h1 {
+  #overview-view .marketing-copy h1 {
     max-width: 11ch;
   }
-#overview-view .hero-cta-row .button,
+  #overview-view .hero-cta-row .button,
   #overview-view .hero-cta-row .button-secondary {
     width: 100%;
     justify-content: center;
   }
-#overview-view .offer-tile-top,
+  #overview-view .offer-tile-top,
   #overview-view .offer-tile-meta,
   #overview-view .section-heading {
     flex-direction: column;
     align-items: flex-start;
   }
-#overview-view .offer-spotlight h2 {
+  #overview-view .offer-spotlight h2 {
     font-size: 1.75rem;
   }
-#overview-view .chart-container {
+  #overview-view .chart-container {
     height: 210px;
   }
-.data-table th,
+  .data-table th,
   .data-table td {
     padding: 0.5rem;
     font-size: 0.75rem;
   }
-.btn {
+  .btn {
     padding: 0.4rem 0.75rem;
     font-size: 0.75rem;
   }
-.chart-container {
+  .chart-container {
     height: 200px;
   }
-.stat-label {
+  .stat-label {
     font-size: 0.65rem;
   }
-.form-group {
+  .form-group {
     margin-bottom: 0.75rem;
   }
-.form-label {
+  .form-label {
     font-size: 0.75rem;
     margin-bottom: 0.25rem;
   }
-.form-input,
+  .form-input,
   .form-select {
     padding: 0.5rem 0.6rem;
     font-size: 0.8rem;
   }
-.modal-content {
+  .modal-content {
     width: 95%;
     padding: 1rem;
     margin: 0.5rem;
   }
-.modal-header {
+  .modal-header {
     padding-bottom: 0.75rem;
   }
-.modal-header h2 {
+  .modal-header h2 {
     font-size: 1.1rem;
   }
-.modal-body {
+  .modal-body {
     padding: 0.75rem 0;
   }
-.modal-footer {
+  .modal-footer {
     padding-top: 0.75rem;
     flex-direction: column;
   }
-.modal-footer .btn {
+  .modal-footer .btn {
     width: 100%;
   }
-.detail-label {
+  .detail-label {
     font-size: 0.75rem;
   }
 .detail-value {
     font-size: 0.85rem;
-  }}
+  }
+}
 @media (max-width: 480px) {
 .dashboard-header {
     padding: 0.5rem;
