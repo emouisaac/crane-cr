@@ -206,7 +206,7 @@ async function submitLoanApplication({ user, body, req }) {
   const duplicateRisk = await detectDuplicateRisk({ userId: user.id, nationalId, phone, email, req });
 
   try {
-    return await withTransaction(async (client) => {
+    const submissionResult = await withTransaction(async (client) => {
       await assertLoanApplicationAllowed(client, user.id);
       const interestRate = await getDefaultInterestRate(client);
 
@@ -275,8 +275,17 @@ async function submitLoanApplication({ user, body, req }) {
         [loan.id, user.id, null, "submitted", "Application submitted by borrower"]
       );
 
+      return {
+        loan,
+        duplicateRisk
+      };
+    });
+
+    const { loan, duplicateRisk: resolvedDuplicateRisk } = submissionResult;
+    const borrowerName = user.full_name || body.fullName || "A borrower";
+
+    try {
       await createNotification({
-        client,
         recipientAccountId: user.id,
         title: "Loan application submitted",
         message: `Your request ${loan.application_code} has been received and is awaiting review.`,
@@ -285,41 +294,39 @@ async function submitLoanApplication({ user, body, req }) {
         payload: { loanId: loan.id, applicationCode: loan.application_code }
       });
       await createNotification({
-        client,
         audienceRole: "admin",
         title: "New loan application",
-        message: `${user.full_name} submitted ${loan.application_code} for review.`,
+        message: `${borrowerName} submitted ${loan.application_code} for review.`,
         level: "info",
         eventType: "loan.submitted",
         payload: { loanId: loan.id, applicationCode: loan.application_code, userId: user.id }
       });
       await createNotification({
-        client,
         audienceRole: "super_admin",
         title: "New loan application",
-        message: `${user.full_name} submitted ${loan.application_code}.`,
+        message: `${borrowerName} submitted ${loan.application_code}.`,
         level: "info",
         eventType: "loan.submitted",
         payload: { loanId: loan.id, applicationCode: loan.application_code, userId: user.id }
       });
-
-      emitToRole("admin", "loan:created", loan);
-      emitToRole("super_admin", "loan:created", loan);
-      emitToAccount(user.id, "loan:updated", loan);
-
       await logAuditEvent({
-        client,
         actorAccountId: user.id,
         actorRole: user.role,
         action: "loan.submitted",
         entityType: "loan_application",
         entityId: loan.id,
         ipAddress: getIpAddress(req),
-        metadata: { applicationCode: loan.application_code, duplicateRisk }
+        metadata: { applicationCode: loan.application_code, duplicateRisk: resolvedDuplicateRisk }
       });
+    } catch (sideEffectError) {
+      console.error("Loan submission side effect failed", sideEffectError);
+    }
 
-      return loan;
-    });
+    emitToRole("admin", "loan:created", loan);
+    emitToRole("super_admin", "loan:created", loan);
+    emitToAccount(user.id, "loan:updated", loan);
+
+    return loan;
   } catch (error) {
     if (error.code === "23505" && error.constraint === "idx_single_active_loan_request") {
       throw await resolveLoanApplicationConflict(user.id);

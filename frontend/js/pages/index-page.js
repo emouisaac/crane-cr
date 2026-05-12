@@ -48,6 +48,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const earlyPayoffBenefit = document.querySelector("[data-early-payoff-benefit]");
   const earlyTotalPayoff = document.querySelector("[data-early-total-payoff]");
   const earlyRepayButton = document.querySelector("[data-early-repay-button]");
+  const offerAmountValue = document.querySelector(".offer-amount");
+  const offerInstallmentValue = document.querySelector("[data-offer-installment]");
+  const offerRateCaption = document.querySelector("[data-offer-rate-caption]");
   let dashboardData = null;
   let dashboardRefreshTimer = null;
   let currentLoanFilter = "all";
@@ -59,9 +62,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   const reapplicationDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
   const defaultLoanHelpText = "Status will be updated once admin review begins.";
   const defaultLoanInterestRate = 17;
+  const promoOffer = {
+    amount: 5000000,
+    ratePercent: 9,
+    termMonths: 12
+  };
+  const popularDistricts = [
+    "Kampala",
+    "Wakiso",
+    "Mukono",
+    "Jinja City",
+    "Mbarara City",
+    "Gulu City",
+    "Mbale City",
+    "Masaka City",
+    "Lira City",
+    "Hoima City",
+    "Fort Portal City",
+    "Arua City"
+  ];
 
   function formatCurrency(value) {
     return new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(Number(value || 0));
+  }
+
+  function formatOfferCurrency(value) {
+    return `UGX ${Number(value || 0).toLocaleString("en-UG", { maximumFractionDigits: 0 })}`;
   }
 
   function escapeHtml(value) {
@@ -75,6 +101,98 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function createEmptyState(message) {
     return `<div class="panel-empty-state compact">${escapeHtml(message)}</div>`;
+  }
+
+  function createUniqueOptions(values = []) {
+    return values.filter((value, index, list) => value && list.indexOf(value) === index);
+  }
+
+  function flattenOptionGroup(group = {}) {
+    return createUniqueOptions(Object.values(group).flat().filter(Boolean));
+  }
+
+  function formatTitleCase(value) {
+    return String(value || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .split(" ")
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase())
+      .join(" ");
+  }
+
+  function prioritizeDistrictOptions() {
+    const districtList = document.getElementById("uganda-districts");
+    if (!districtList) {
+      return;
+    }
+
+    const existingOptions = Array.from(districtList.querySelectorAll("option"))
+      .map((option) => option.value)
+      .filter(Boolean);
+    const seenKeys = new Set();
+    const sortedOptions = [...popularDistricts, ...existingOptions].filter((option) => {
+      const key = normalizeLocationKey(option);
+      if (!key || seenKeys.has(key)) {
+        return false;
+      }
+      seenKeys.add(key);
+      return true;
+    });
+
+    districtList.innerHTML = sortedOptions.map((option) => `<option value="${escapeHtml(option)}"></option>`).join("");
+  }
+
+  function buildFallbackLocalityConfig(districtValue) {
+    const districtLabel = formatTitleCase(districtValue);
+    if (!districtLabel) {
+      return null;
+    }
+
+    const districtKey = normalizeLocationKey(districtLabel);
+    const isCityAddress = cityDistrictNames.has(districtKey) || districtKey.endsWith(" city");
+    const districtBase = districtLabel.replace(/\s+City$/i, "").trim();
+    const subcounties = isCityAddress
+      ? ["Central Division", "Northern Division", "Southern Division", "Eastern Division", "Western Division"]
+      : [`${districtBase} Town Council`, `${districtBase} Central`, `${districtBase} East`, `${districtBase} North`, `${districtBase} South`];
+
+    const villagesBySubcounty = {};
+    const streetsByVillage = {};
+
+    subcounties.forEach((subcounty) => {
+      const villageOptions = isCityAddress
+        ? [`${districtBase} Central Zone`, `${districtBase} Market Zone`, `${districtBase} Residential Zone`]
+        : [`${districtBase} Trading Centre`, `${subcounty} Zone A`, `${subcounty} Zone B`];
+      villagesBySubcounty[normalizeLocationKey(subcounty)] = villageOptions;
+
+      villageOptions.forEach((village) => {
+        streetsByVillage[normalizeLocationKey(village)] = isCityAddress
+          ? ["Main Street", "Market Street", "Station Road", "Church Lane"]
+          : ["Main Road", "Market Road", "School Lane", "Church Road"];
+      });
+    });
+
+    return {
+      subcounties,
+      parishes: villagesBySubcounty,
+      villages: streetsByVillage
+    };
+  }
+
+  function renderPromoOffer() {
+    const { amount, ratePercent, termMonths } = promoOffer;
+    const monthlyPrincipal = amount / Math.max(termMonths, 1);
+    const monthlyInterest = (amount * ratePercent) / 100;
+    const monthlyInstallment = Math.round(monthlyPrincipal + monthlyInterest);
+
+    if (offerAmountValue) {
+      offerAmountValue.textContent = formatOfferCurrency(amount);
+    }
+    if (offerInstallmentValue) {
+      offerInstallmentValue.textContent = formatOfferCurrency(monthlyInstallment);
+    }
+    if (offerRateCaption) {
+      offerRateCaption.textContent = `${ratePercent}% monthly for ${termMonths} months`;
+    }
   }
 
   function addDays(dateValue, days) {
@@ -423,7 +541,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function getLocalityConfig() {
-    return localityDirectory[normalizeLocationKey(loanForm?.elements?.district?.value)] || null;
+    const districtValue = loanForm?.elements?.district?.value;
+    return localityDirectory[normalizeLocationKey(districtValue)] || buildFallbackLocalityConfig(districtValue);
   }
 
   function getLocalityOptions(group, value) {
@@ -442,8 +561,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!config) {
       updateSelectOptions(subcountyField, [], "Select your sub-county / town council");
-      updateSelectOptions(parishField, [], "Select your parish / ward");
-      updateSelectOptions(villageField, [], "Select your village / zone");
+      updateSelectOptions(parishField, [], "Select your village / zone");
+      updateSelectOptions(villageField, [], "Select your street / plot");
       return;
     }
 
@@ -458,18 +577,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateSelectOptions(subcountyField, subcountyOptions, "Select your sub-county / town council");
 
     const activeSubcounty = subcountyField?.value || "";
-    const parishOptions = getLocalityOptions(config.parishes, activeSubcounty);
+    const parishOptions = activeSubcounty
+      ? getLocalityOptions(config.parishes, activeSubcounty)
+      : flattenOptionGroup(config.parishes);
 
     if (resetChildren) {
       if (parishField) parishField.value = "";
       if (villageField) villageField.value = "";
     }
 
-    updateSelectOptions(parishField, parishOptions, "Select your parish / ward");
+    updateSelectOptions(parishField, parishOptions, "Select your village / zone");
 
     const activeParish = parishField?.value || "";
-    const villageOptions = getLocalityOptions(config.villages, activeParish);
-    updateSelectOptions(villageField, villageOptions, "Select your village / zone");
+    const villageOptions = activeParish
+      ? getLocalityOptions(config.villages, activeParish)
+      : flattenOptionGroup(config.villages);
+    updateSelectOptions(villageField, villageOptions, "Select your street / plot");
   }
 
   function updateAddressLabel() {
@@ -1499,6 +1622,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     populateLocalitySuggestions();
   });
+  prioritizeDistrictOptions();
+  renderPromoOffer();
   updateLoanApplicationRules();
 
   // Play intro animation first, then load dashboard
