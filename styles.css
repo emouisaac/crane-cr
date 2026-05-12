@@ -426,7 +426,7 @@ select {
 }
 .offer-card {
   background: linear-gradient(135deg, #0d8b63 0%, #18aa79 100%);
-  color: white;
+  color: rgb(90, 90, 90);
   border-radius: var(--radius-lg);
   padding: 0.5rem;
   max-width: 350px;
