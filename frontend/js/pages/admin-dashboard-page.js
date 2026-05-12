@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     APPLICATIONS_VIEW: "applications:view",
     APPLICATIONS_UPDATE: "applications:status:update",
     BORROWERS_VIEW: "borrowers:view",
+    ACCOUNTS_PIN_RESET: "accounts:pin:reset",
     DOCUMENTS_VIEW: "documents:view",
     DOCUMENTS_REVIEW: "documents:review",
     DOCUMENTS_REQUEST: "documents:request",
@@ -31,6 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     CAPABILITIES.APPLICATIONS_VIEW,
     CAPABILITIES.APPLICATIONS_UPDATE,
     CAPABILITIES.BORROWERS_VIEW,
+    CAPABILITIES.ACCOUNTS_PIN_RESET,
     CAPABILITIES.DOCUMENTS_VIEW,
     CAPABILITIES.DOCUMENTS_REVIEW,
     CAPABILITIES.DOCUMENTS_REQUEST,
@@ -48,6 +50,83 @@ document.addEventListener("DOMContentLoaded", async () => {
     compliance_officer: "Compliance Officer",
     recovery_officer: "Recovery Officer",
     cashier: "Cashier"
+  };
+
+  const ROLE_CAPABILITIES = {
+    manager: [
+      CAPABILITIES.DASHBOARD_VIEW,
+      CAPABILITIES.APPLICATIONS_VIEW,
+      CAPABILITIES.APPLICATIONS_UPDATE,
+      CAPABILITIES.BORROWERS_VIEW,
+      CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.DOCUMENTS_VIEW,
+      CAPABILITIES.DOCUMENTS_REVIEW,
+      CAPABILITIES.DOCUMENTS_REQUEST,
+      CAPABILITIES.COMMENTS_ADD,
+      CAPABILITIES.NOTIFICATIONS_VIEW
+    ],
+    secretary: [
+      CAPABILITIES.DASHBOARD_VIEW,
+      CAPABILITIES.APPLICATIONS_VIEW,
+      CAPABILITIES.BORROWERS_VIEW,
+      CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.DOCUMENTS_REQUEST,
+      CAPABILITIES.COMMENTS_ADD,
+      CAPABILITIES.NOTIFICATIONS_VIEW
+    ],
+    loan_officer: [
+      CAPABILITIES.DASHBOARD_VIEW,
+      CAPABILITIES.APPLICATIONS_VIEW,
+      CAPABILITIES.APPLICATIONS_UPDATE,
+      CAPABILITIES.BORROWERS_VIEW,
+      CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.DOCUMENTS_VIEW,
+      CAPABILITIES.DOCUMENTS_REVIEW,
+      CAPABILITIES.DOCUMENTS_REQUEST,
+      CAPABILITIES.COMMENTS_ADD,
+      CAPABILITIES.NOTIFICATIONS_VIEW
+    ],
+    contact_support: [
+      CAPABILITIES.DASHBOARD_VIEW,
+      CAPABILITIES.BORROWERS_VIEW,
+      CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.DOCUMENTS_REQUEST,
+      CAPABILITIES.COMMENTS_ADD,
+      CAPABILITIES.NOTIFICATIONS_VIEW
+    ],
+    analyst: [
+      CAPABILITIES.DASHBOARD_VIEW,
+      CAPABILITIES.APPLICATIONS_VIEW,
+      CAPABILITIES.BORROWERS_VIEW,
+      CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.DOCUMENTS_VIEW,
+      CAPABILITIES.DOCUMENTS_REVIEW,
+      CAPABILITIES.COMMENTS_ADD,
+      CAPABILITIES.NOTIFICATIONS_VIEW
+    ],
+    compliance_officer: [
+      CAPABILITIES.DASHBOARD_VIEW,
+      CAPABILITIES.APPLICATIONS_VIEW,
+      CAPABILITIES.DOCUMENTS_VIEW,
+      CAPABILITIES.DOCUMENTS_REVIEW,
+      CAPABILITIES.COMMENTS_ADD,
+      CAPABILITIES.NOTIFICATIONS_VIEW
+    ],
+    recovery_officer: [
+      CAPABILITIES.DASHBOARD_VIEW,
+      CAPABILITIES.BORROWERS_VIEW,
+      CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.COMMENTS_ADD,
+      CAPABILITIES.NOTIFICATIONS_VIEW
+    ],
+    cashier: [
+      CAPABILITIES.DASHBOARD_VIEW,
+      CAPABILITIES.APPLICATIONS_VIEW,
+      CAPABILITIES.BORROWERS_VIEW,
+      CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.COMMENTS_ADD,
+      CAPABILITIES.NOTIFICATIONS_VIEW
+    ]
   };
 
   let dashboard = null;
@@ -112,7 +191,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (account.role === "super_admin") {
       return new Set(FULL_ADMIN_CAPABILITIES);
     }
-    return new Set(Array.isArray(account.permissions) ? account.permissions : []);
+    const defaultCapabilities = ROLE_CAPABILITIES[account.admin_role || account.adminRole] || ROLE_CAPABILITIES.manager;
+    return new Set([...(Array.isArray(account.permissions) ? account.permissions : []), ...defaultCapabilities]);
   }
 
   function hasCapability(capability, account = currentAccount) {
@@ -308,6 +388,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                   <span>${escapeHtml(user.verification_status || "unverified")}</span>
                   <span>${escapeHtml(user.role || "user")}</span>
                 </div>
+                ${
+                  hasCapability(CAPABILITIES.ACCOUNTS_PIN_RESET)
+                    ? `
+                      <div class="role-item-actions">
+                        <button type="button" class="button button-secondary" data-reset-account-pin="${user.id}">Reset PIN</button>
+                      </div>
+                    `
+                    : ""
+                }
               </article>
             `
           )
@@ -733,6 +822,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     setActiveView("applications");
     await fetchLoanDetail(trigger.dataset.loanId);
+  });
+
+  document.getElementById("admin-users-list").addEventListener("click", async (event) => {
+    const resetPinButton = event.target.closest("[data-reset-account-pin]");
+    if (!resetPinButton) {
+      return;
+    }
+
+    const nextPin = window.prompt("Enter the new 6-digit borrower PIN:", "") || "";
+    if (!nextPin) {
+      return;
+    }
+
+    await window.CraneApi.resetAccountPin(resetPinButton.dataset.resetAccountPin, nextPin);
+    window.CraneNotify.success("Borrower PIN reset.");
   });
 
   document.getElementById("application-detail").addEventListener("click", async (event) => {

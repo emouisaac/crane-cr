@@ -110,6 +110,7 @@
     updateLoanStatus: (loanId, body) => request(`/admin/applications/${loanId}/status`, { method: "PATCH", body }),
     requestDocuments: (loanId, body) => request(`/admin/applications/${loanId}/request-documents`, { method: "POST", body }),
     verifyDocument: (documentId, body) => request(`/admin/documents/${documentId}`, { method: "PATCH", body }),
+    resetAccountPin: (accountId, pin) => request(`/admin/accounts/${accountId}/reset-pin`, { method: "POST", body: { pin } }),
     addAdminComment: (loanId, body) => request(`/admin/applications/${loanId}/comments`, { method: "POST", body }),
     superAdminDashboard: () => request("/super-admin/dashboard"),
     createAdmin: (body) => request("/super-admin/admins", { method: "POST", body }),

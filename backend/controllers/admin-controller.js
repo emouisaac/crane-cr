@@ -1,4 +1,5 @@
 const fs = require("fs");
+const bcrypt = require("bcryptjs");
 const { query } = require("../config/database");
 const { getAllLoans, getLoanById } = require("../models/loan-model");
 const { getDocumentsForLoan } = require("../models/document-model");
@@ -6,11 +7,13 @@ const { listUsers } = require("../models/account-model");
 const { getNotificationsForAccount } = require("../models/notification-model");
 const { updateLoanStatus } = require("../services/loan-service");
 const { createNotification } = require("../services/notification-service");
+const { revokeAllSessionsForAccount } = require("../services/auth-service");
 const { emitToAccount, emitToRole } = require("../services/socket-bus");
 const { logAuditEvent } = require("../services/audit-service");
 const { getIpAddress } = require("../utils/http");
 const { AppError } = require("../utils/errors");
-const { CAPABILITIES, hasAdminCapability } = require("../utils/admin-roles");
+const { CAPABILITIES, getAdminRoleLabel, hasAdminCapability } = require("../utils/admin-roles");
+const { validatePin } = require("../utils/validators");
 
 function requireCapability(account, capability) {
   if (!hasAdminCapability(account, capability)) {
@@ -126,6 +129,55 @@ async function users(req, res) {
   res.json({ users: result });
 }
 
+async function resetUserPin(req, res) {
+  requireCapability(req.auth, CAPABILITIES.ACCOUNTS_PIN_RESET);
+
+  const result = await query(
+    `SELECT id, role, full_name
+     FROM accounts
+     WHERE id = $1`,
+    [req.params.accountId]
+  );
+  const account = result.rows[0];
+  if (!account || account.role !== "user") {
+    throw new AppError(404, "Borrower account not found.");
+  }
+
+  const nextPin = validatePin(req.body.pin);
+  const pinHash = await bcrypt.hash(nextPin, 12);
+
+  await query(
+    `UPDATE accounts
+     SET pin_hash = $2, updated_at = NOW()
+     WHERE id = $1`,
+    [account.id, pinHash]
+  );
+
+  await revokeAllSessionsForAccount(account.id);
+  emitToAccount(account.id, "session:revoked", { accountId: account.id });
+
+  await createNotification({
+    recipientAccountId: account.id,
+    title: "Account PIN reset",
+    message: `Your Crane Credit PIN was reset by ${req.auth.role === "super_admin" ? "the super admin" : getAdminRoleLabel(req.auth.admin_role)}. Please sign in again with the new PIN.`,
+    level: "warning",
+    eventType: "account.pin_reset",
+    payload: { accountId: account.id }
+  });
+
+  await logAuditEvent({
+    actorAccountId: req.auth.id,
+    actorRole: req.auth.role,
+    action: "account.pin_reset",
+    entityType: "account",
+    entityId: account.id,
+    ipAddress: getIpAddress(req),
+    metadata: { targetRole: account.role }
+  });
+
+  res.json({ success: true });
+}
+
 async function requestDocuments(req, res) {
   requireCapability(req.auth, CAPABILITIES.DOCUMENTS_REQUEST);
   const loan = await getLoanById(req.params.loanId);
@@ -187,6 +239,7 @@ module.exports = {
   dashboard,
   downloadDocument,
   requestDocuments,
+  resetUserPin,
   reviewLoan,
   users,
   verifyDocument

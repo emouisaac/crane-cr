@@ -477,6 +477,8 @@
               <input id="super-max-loan-amount" type="number" name="maxLoanAmount" placeholder="Max loan amount">
               <label for="super-daily-approval-limit">Daily Approval Limit</label>
               <input id="super-daily-approval-limit" type="number" name="dailyApprovalLimit" placeholder="Daily approval limit">
+              <label for="super-default-interest-rate">Default Interest Rate (%)</label>
+              <input id="super-default-interest-rate" type="number" name="defaultInterestRate" placeholder="17" min="0" step="0.01">
               <label for="super-support-notice">Support Notice</label>
               <textarea id="super-support-notice" name="supportNotice" placeholder="Operational notice for the platform"></textarea>
               <button type="submit" class="button button-secondary">Save Settings</button>
@@ -587,6 +589,7 @@
             <line x1="4" y1="12" x2="20" y2="12"></line>
             <line x1="4" y1="18" x2="20" y2="18"></line>
           </svg>
+          <span class="footer-box-label">Menu</span>
         </button>
         <button type="button" class="footer-box" aria-label="Admins" data-view-trigger="admins">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -595,18 +598,21 @@
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
+          <span class="footer-box-label">Admins</span>
         </button>
         <button type="button" class="footer-box home-nav-btn" aria-label="Home" data-view-trigger="overview">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M3 10.5 12 3l9 7.5"></path>
             <path d="M5 9.5V21h14V9.5"></path>
           </svg>
+          <span class="footer-box-label">Home</span>
         </button>
         <button type="button" class="footer-box" aria-label="Applications" data-view-trigger="applications">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
             <polyline points="13 2 13 9 20 9"></polyline>
           </svg>
+          <span class="footer-box-label">Apps</span>
         </button>
         <button type="button" class="footer-box" aria-label="Users" data-view-trigger="users">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -615,12 +621,14 @@
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
+          <span class="footer-box-label">Users</span>
         </button>
         <button type="button" class="footer-box" aria-label="Profile" data-action="open-profile">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <circle cx="12" cy="8" r="4"></circle>
             <path d="M4 21a8 8 0 0 1 16 0"></path>
           </svg>
+          <span class="footer-box-label">Profile</span>
         </button>
       </div>
     </footer>

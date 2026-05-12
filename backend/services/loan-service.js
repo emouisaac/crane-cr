@@ -15,6 +15,7 @@ const eligibilityDateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "long",
   timeZone: "UTC"
 });
+const DEFAULT_INTEREST_RATE = 17;
 
 function addDays(dateValue, days) {
   const date = new Date(dateValue);
@@ -175,6 +176,23 @@ async function detectDuplicateRisk({ userId, nationalId, phone, email, req }) {
   };
 }
 
+async function getDefaultInterestRate(client) {
+  const result = await client.query(
+    `SELECT value
+     FROM app_settings
+     WHERE key = 'defaultInterestRate'
+     LIMIT 1`
+  );
+
+  const rawValue = result.rows[0]?.value;
+  const numericValue = Number(typeof rawValue === "object" && rawValue !== null ? rawValue : rawValue);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return DEFAULT_INTEREST_RATE;
+  }
+
+  return numericValue;
+}
+
 async function submitLoanApplication({ user, body, req }) {
   const amount = positiveAmount(body.amount, "Loan amount");
   const termMonths = Number.parseInt(body.termMonths, 10);
@@ -190,6 +208,7 @@ async function submitLoanApplication({ user, body, req }) {
   try {
     return await withTransaction(async (client) => {
       await assertLoanApplicationAllowed(client, user.id);
+      const interestRate = await getDefaultInterestRate(client);
 
       await client.query(
         `UPDATE accounts
@@ -206,6 +225,7 @@ async function submitLoanApplication({ user, body, req }) {
             dateOfBirth: body.dateOfBirth || null,
             district: body.district || null,
             subcounty: body.subcounty || null,
+            parish: body.parish || null,
             village: body.village || null
           })
         ]
@@ -214,8 +234,8 @@ async function submitLoanApplication({ user, body, req }) {
       const result = await client.query(
         `INSERT INTO loan_applications
           (application_code, user_id, amount, term_months, purpose, applicant_category, monthly_income, other_monthly_income,
-           existing_obligations, employment_details, address_details, duplicate_risk_score, duplicate_risk_flags)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+           existing_obligations, employment_details, address_details, interest_rate, duplicate_risk_score, duplicate_risk_flags)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
          RETURNING *`,
         [
           generateApplicationCode(),
@@ -238,9 +258,11 @@ async function submitLoanApplication({ user, body, req }) {
           JSON.stringify({
             district: sanitizeNullableString(body.district),
             subcounty: sanitizeNullableString(body.subcounty),
+            parish: sanitizeNullableString(body.parish),
             village: sanitizeNullableString(body.village),
             dateOfBirth: body.dateOfBirth || null
           }),
+          interestRate,
           duplicateRisk.score,
           JSON.stringify(duplicateRisk.flags)
         ]

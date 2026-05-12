@@ -183,12 +183,16 @@
                       <span class="offer-label">Exclusive Offer</span>
                       <span class="pulse-badge">LIVE</span>
                     </div>
-                    <h3>Growth Boost</h3>
                     <div class="offer-amount">UGX 5,000,000</div>
+                    <div class="offer-rate-stack">
+                      <span class="offer-rate-old">17%</span>
+                      <span class="offer-rate-new">9%</span>
+                    </div>
+                    <h3>Growth Boost</h3>
                     <div class="offer-details">
                       <div class="detail-row">
                         <span class="detail-label">Rate</span>
-                        <span class="detail-value">1.2%/month</span>
+                        <span class="detail-value">Promo pricing live</span>
                       </div>
                       <div class="detail-row">
                         <span class="detail-label">Installment</span>
@@ -559,7 +563,7 @@
                   <input type="email" name="email" placeholder="name@example.com">
                 </div>
                 <div class="form-group">
-                  <label>ID / passport number</label>
+                  <label>NIN / Passport number</label>
                   <input type="text" name="nationalId" placeholder="e.g. NIN123456789" required>
                 </div>
                 <div class="form-group">
@@ -571,12 +575,22 @@
                   <input type="text" name="district" list="uganda-districts" placeholder="Start typing your district or city" required>
                 </div>
                 <div class="form-group">
-                  <label id="address-subcounty-label">Subcounty / Division</label>
-                  <input type="text" name="subcounty" placeholder="e.g. Nakawa Division or Bardege-Layibi" required>
+                  <label id="address-subcounty-label">Sub-county / Town council</label>
+                  <select name="subcounty" required disabled>
+                    <option value="">Select your sub-county / town council</option>
+                  </select>
                 </div>
                 <div class="form-group">
-                  <label>Zone / Village</label>
-                  <input type="text" name="village" placeholder="e.g. Nakasero, Kampala Hill" required>
+                  <label id="address-parish-label">Parish / Ward</label>
+                  <select name="parish" required disabled>
+                    <option value="">Select your parish / ward</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Village / Zone</label>
+                  <select name="village" required disabled>
+                    <option value="">Select your village / zone</option>
+                  </select>
                 </div>
                 <div class="form-group">
                   <label>Applicant category</label>
@@ -597,6 +611,8 @@
                   <label>Preferred term</label>
                   <select name="termMonths" required>
                     <option value="">Select term</option>
+                    <option value="1">1 month</option>
+                    <option value="2">2 months</option>
                     <option value="3">3 months</option>
                     <option value="6">6 months</option>
                     <option value="9">9 months</option>
@@ -622,7 +638,7 @@
 
               <div class="form-divider"></div>
 
-              <div class="section-subheading">Employment / business details</div>
+              <div class="section-subheading" id="employment-section-heading">Employment / business details</div>
               <div class="form-grid">
                 <div class="form-group employment-detail-group" data-category-group="employment">
                   <label id="employment-name-label">Employer / organization</label>
@@ -674,11 +690,11 @@
               </div>
               <div class="document-grid">
                 <div class="form-group">
-                  <label>ID / passport front</label>
+                  <label>NIN / passport front</label>
                   <input type="file" name="id_front" accept="image/*" capture="environment" required>
                 </div>
                 <div class="form-group">
-                  <label>ID / passport back</label>
+                  <label>NIN / passport back</label>
                   <input type="file" name="id_back" accept="image/*" capture="environment" required>
                 </div>
                 <div class="form-group" data-document-group="income-proof">

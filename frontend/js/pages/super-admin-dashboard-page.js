@@ -29,14 +29,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   ];
 
   const ADMIN_ROLE_DESCRIPTIONS = {
-    manager: "Full workspace access across applications, documents, borrowers, notes, and requests. Final loan approval still remains super-admin only.",
-    secretary: "Queue coordination, borrower visibility, internal notes, and document request follow-up.",
-    loan_officer: "Full workspace access across applications, documents, borrowers, notes, and requests. Final loan approval still remains super-admin only.",
-    contact_support: "Borrower support, internal notes, notifications, and document request communication.",
-    analyst: "Application review, borrower visibility, document verification, and operational analysis.",
+    manager: "Full workspace access across applications, documents, borrowers, notes, document requests, and borrower PIN resets. Final loan approval still remains super-admin only.",
+    secretary: "Queue coordination, borrower visibility, borrower PIN resets, internal notes, and document request follow-up.",
+    loan_officer: "Full workspace access across applications, documents, borrowers, notes, document requests, and borrower PIN resets. Final loan approval still remains super-admin only.",
+    contact_support: "Borrower support, borrower PIN resets, internal notes, notifications, and document request communication.",
+    analyst: "Application review, borrower visibility, borrower PIN resets, document verification, and operational analysis.",
     compliance_officer: "Application and document compliance checks with notes and alert visibility.",
-    recovery_officer: "Borrower follow-up, notes, and operational notifications for recovery workflows.",
-    cashier: "Borrower visibility, queue awareness, and internal operational coordination."
+    recovery_officer: "Borrower follow-up, borrower PIN resets, notes, and operational notifications for recovery workflows.",
+    cashier: "Borrower visibility, borrower PIN resets, queue awareness, and internal operational coordination."
   };
 
   function escapeHtml(value) {
@@ -274,6 +274,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
                 <div class="role-item-actions">
                   <button type="button" class="button button-secondary" data-status-account="${user.id}" data-status-value="${user.status === "active" ? "suspended" : "active"}">${user.status === "active" ? "Suspend" : "Reactivate"}</button>
+                  <button type="button" class="button button-secondary" data-reset-account-pin="${user.id}">Reset PIN</button>
                   <button type="button" class="button role-action-danger" data-force-logout="${user.id}">Force Logout</button>
                 </div>
               </article>
@@ -516,6 +517,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     form.elements.maxLoanAmount.value = settingsMap.maxLoanAmount || "";
     form.elements.dailyApprovalLimit.value = settingsMap.dailyApprovalLimit || "";
+    form.elements.defaultInterestRate.value = settingsMap.defaultInterestRate || 17;
     form.elements.supportNotice.value = settingsMap.supportNotice || "";
   }
 
@@ -773,6 +775,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    const resetPinButton = event.target.closest("[data-reset-account-pin]");
+    if (resetPinButton) {
+      const nextPin = window.prompt("Enter the new 6-digit borrower PIN:", "") || "";
+      if (!nextPin) {
+        return;
+      }
+      await window.CraneApi.resetAccountPin(resetPinButton.dataset.resetAccountPin, nextPin);
+      window.CraneNotify.success("Borrower PIN reset.");
+      return;
+    }
+
     const restoreButton = event.target.closest("[data-restore-backup]");
     if (restoreButton) {
       const confirmed = window.confirm(`Restore ${restoreButton.dataset.restoreBackup}? This replaces live data.`);
@@ -880,6 +893,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await window.CraneApi.updateSettings({
       maxLoanAmount: Number(form.elements.maxLoanAmount.value || 0),
       dailyApprovalLimit: Number(form.elements.dailyApprovalLimit.value || 0),
+      defaultInterestRate: Number(form.elements.defaultInterestRate.value || 17),
       supportNotice: form.elements.supportNotice.value.trim()
     });
 

@@ -22,7 +22,11 @@ async function dashboard(req, res) {
       activeLoans: loans.filter((loan) => ["submitted", "under_review", "verification", "approved", "disbursed"].includes(loan.status)).length,
       outstandingBalance: loans
         .filter((loan) => ["approved", "disbursed"].includes(loan.status))
-        .reduce((sum, loan) => sum + Number(loan.amount || 0), 0),
+        .reduce((sum, loan) => {
+          const amount = Number(loan.amount || 0);
+          const interestRate = Number(loan.interest_rate || 0);
+          return sum + amount + (amount * interestRate) / 100;
+        }, 0),
       unreadNotifications: notifications.filter((item) => !item.read_at).length
     }
   });

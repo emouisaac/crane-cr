@@ -58,6 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const completedLoanStatuses = new Set(["closed"]);
   const reapplicationDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
   const defaultLoanHelpText = "Status will be updated once admin review begins.";
+  const defaultLoanInterestRate = 17;
 
   function formatCurrency(value) {
     return new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(Number(value || 0));
@@ -218,6 +219,155 @@ document.addEventListener("DOMContentLoaded", async () => {
     "fort portal city"
   ]);
 
+  const localityDirectory = {
+    kampala: {
+      subcounties: ["Central Division", "Kawempe Division", "Makindye Division", "Nakawa Division", "Rubaga Division"],
+      parishes: {
+        "central division": ["Nakasero", "Old Kampala", "Mengo", "Civic Centre"],
+        "kawempe division": ["Bwaise", "Kanyanya", "Kyebando", "Mulago"],
+        "makindye division": ["Kibuye", "Kansanga", "Nsambya", "Katwe"],
+        "nakawa division": ["Naguru", "Ntinda", "Kireka", "Najjera"],
+        "rubaga division": ["Mengo", "Nateete", "Lungujja", "Kasubi"]
+      },
+      villages: {
+        nakasero: ["Upper Nakasero", "Lower Nakasero", "Akii Bua Road"],
+        "old kampala": ["Old Kampala", "Namirembe", "Gaddafi Road"],
+        mengo: ["Mengo", "Kabaka Anjagala", "Balintuma"],
+        civic: ["Parliament Avenue", "Constitution Square"],
+        bwaise: ["Bwaise I", "Bwaise II", "Bwaise III"],
+        kanyanya: ["Kanyanya East", "Kanyanya West", "Kubiri"],
+        kyebando: ["Kyebando Central", "Kisalosalo", "Kalerwe"],
+        mulago: ["Mulago I", "Mulago II", "Makerere North"],
+        kibuye: ["Kibuye I", "Kibuye II", "Ndejje"],
+        kansanga: ["Kansanga Central", "Lukuli", "Ggaba Road"],
+        nsambya: ["Nsambya Central", "Kabalagala", "Muyenga"],
+        katwe: ["Katwe I", "Katwe II", "Wankulukuku"],
+        naguru: ["Naguru Go-down", "Naguru East", "Bugolobi"],
+        ntinda: ["Ntinda", "Minister's Village", "Naguru Hill"],
+        kireka: ["Kireka A", "Kireka B", "Kamuli"],
+        najjera: ["Kiwatule", "Najjera I", "Najjera II"],
+        nateete: ["Nateete", "Mutundwe", "Lusaze"],
+        lungujja: ["Lungujja", "Lubya", "Busega"],
+        kasubi: ["Kasubi", "Makerere Kikoni", "Kawaala"]
+      }
+    },
+    wakiso: {
+      subcounties: ["Busukuma", "Kakiri", "Kasangati", "Katabi", "Kira", "Kyadondo", "Makindye-Ssabagabo", "Nansana", "Nangabo"],
+      parishes: {
+        busukuma: ["Busiika", "Kiryagonja", "Lugoba"],
+        kakiri: ["Kakiri", "Buloba", "Mpunge"],
+        kasangati: ["Kasangati", "Gayaza", "Wampeewo"],
+        katabi: ["Lunyo", "Kitoro", "Kawuku"],
+        kira: ["Kira", "Bweyogerere", "Nabweru"],
+        kyadondo: ["Nabweru", "Maganjo", "Nansana East"],
+        "makindye-ssabagabo": ["Bunamwaya", "Salaama", "Sseguku"],
+        nansana: ["Nansana East", "Nansana West", "Gganda"],
+        nangabo: ["Kiteezi", "Kanyanya", "Matugga"]
+      },
+      villages: {
+        kakiri: ["Kakiri Town", "Mayanja", "Luwunga"],
+        buloba: ["Buloba Town", "Bujjuko", "Namirembe"],
+        kasangati: ["Kasangati Town", "Kungu", "Kulambiro"],
+        gayaza: ["Gayaza Town", "Manyangwa", "Nakwero"],
+        lunyo: ["Lunyo", "Abaita Ababiri", "Lweza"],
+        kitoro: ["Kitoro", "Entebbe Central", "Kitubulu"],
+        kawuku: ["Kawuku", "Bwerenga", "Lweza"],
+        kira: ["Kira Town", "Mulawa", "Kyaliwajjala"],
+        bweyogerere: ["Bweyogerere", "Butto", "Namugongo"],
+        bunamwaya: ["Bunamwaya", "Zana", "Lubowa"],
+        sseguku: ["Sseguku", "Namasuba", "Katale"],
+        nansana: ["Nansana Central", "Wamala", "Gganda"]
+      }
+    },
+    mukono: {
+      subcounties: ["Goma", "Koome", "Mpatta", "Mukono Central", "Nama", "Nakifuma", "Ntenjeru", "Seeta", "Ssabagabo"],
+      parishes: {
+        goma: ["Kyungu", "Mbalala", "Namanve"],
+        "mukono central": ["Central", "Namumira", "Ntaawo"],
+        nama: ["Nama", "Wantoni", "Njeru"],
+        nakifuma: ["Nakifuma", "Kasawo", "Kojja"],
+        ntenjeru: ["Ntenjeru", "Mpunge", "Mpatta"],
+        seeta: ["Seeta", "Bajjo", "Namugongo"]
+      },
+      villages: {
+        kyungu: ["Kyungu", "Namalere", "Kirangira"],
+        mbalala: ["Mbalala", "Sonde", "Nabusugwe"],
+        central: ["Mukono Central", "Ntaawo", "Buguju"],
+        nama: ["Nama", "Nakisunga", "Wantoni"],
+        seeta: ["Seeta", "Ggulu", "Bajjo"]
+      }
+    },
+    "jinja city": {
+      subcounties: ["Bugembe", "Jinja Central", "Mafubira", "Mpumudde", "Walukuba"],
+      parishes: {
+        bugembe: ["Bugembe", "Wairaka", "Kimaka"],
+        "jinja central": ["Old Kampala", "Main Street", "Nalufenya"],
+        mafubira: ["Mafubira", "Masese", "Buwenge"],
+        mpumudde: ["Mpumudde", "Bashir", "Buwenge"],
+        walukuba: ["Walukuba", "Masese I", "Masese II"]
+      },
+      villages: {
+        bugembe: ["Bugembe Town", "Wairaka", "Kimaka"],
+        nalufenya: ["Nalufenya", "Nile Crescent", "Senior Quarters"],
+        walukuba: ["Walukuba", "Masese I", "Masese II"]
+      }
+    },
+    "mbarara city": {
+      subcounties: ["Biharwe", "Kakoba", "Kamukuzi", "Kisenyi", "Nyamitanga"],
+      parishes: {
+        biharwe: ["Biharwe", "Bwizibwera", "Kibingo"],
+        kakoba: ["Kakoba", "Kakiika", "Nyamityobora"],
+        kamukuzi: ["Kamukuzi", "Katete", "Ruti"],
+        kisenyi: ["Kisenyi", "Kiyanja", "Rwemigina"],
+        nyamitanga: ["Nyamitanga", "Ruti", "Kakika"]
+      },
+      villages: {
+        kakoba: ["Kakoba", "Nyamityobora", "Boma"],
+        kamukuzi: ["Kamukuzi", "Katete", "Ruti"],
+        nyamitanga: ["Nyamitanga", "Rwemigina", "Biharwe"]
+      }
+    },
+    "gulu city": {
+      subcounties: ["Bardege-Layibi", "Laroo-Pece", "Makindye", "Patiko", "Pabo"],
+      parishes: {
+        "bardege-layibi": ["Bardege", "Layibi", "Kasubi"],
+        "laroo-pece": ["Laroo", "Pece", "Limu"],
+        makindye: ["Makindye", "Pageya", "Iriaga"]
+      },
+      villages: {
+        bardege: ["Bardege A", "Bardege B", "Bardege Cell"],
+        layibi: ["Layibi Central", "Layibi Techo", "Layibi East"],
+        laroo: ["Laroo Central", "Laroo West", "Laroo East"],
+        pece: ["Pece Prison", "Pece Acoyo", "Pece Vanguard"]
+      }
+    },
+    "mbale city": {
+      subcounties: ["Industrial Division", "Northern Division", "Wanale Division"],
+      parishes: {
+        "industrial division": ["Mission", "Busamaga", "Namatala"],
+        "northern division": ["Namakwekwe", "Nabuyonga", "Busoba"],
+        "wanale division": ["Nkoma", "Busiu", "Bufumbo"]
+      },
+      villages: {
+        mission: ["Mission Cell", "Senior Quarters", "Hospital Cell"],
+        namatala: ["Namatala", "Mooni", "Busamaga"],
+        namakwekwe: ["Namakwekwe", "Busoba", "Nabuyonga"]
+      }
+    },
+    "masaka city": {
+      subcounties: ["Kimaanya-Kabonera", "Nyendo-Mukungwe"],
+      parishes: {
+        "kimaanya-kabonera": ["Kimaanya", "Kabonera", "Ssenyange"],
+        "nyendo-mukungwe": ["Nyendo", "Mukungwe", "Ndegeya"]
+      },
+      villages: {
+        kimaanya: ["Kimaanya", "Ssenyange", "Bwala Hill"],
+        nyendo: ["Nyendo", "Kijjabwemi", "Kitovu"],
+        mukungwe: ["Mukungwe", "Bwala", "Ndegeya"]
+      }
+    }
+  };
+
   function setGroupVisibility(groups, shouldShow, requiredFields = []) {
     groups.forEach((group) => {
       group.hidden = !shouldShow;
@@ -252,23 +402,128 @@ document.addEventListener("DOMContentLoaded", async () => {
     labelNode.textContent = required ? `${label}${hint ? ` (${hint})` : ""}` : label;
   }
 
-  function updateAddressLabel() {
+  function updateSelectOptions(field, options = [], placeholder = "Select an option") {
+    if (!field) {
+      return;
+    }
+
+    const normalizedOptions = Array.isArray(options) ? options : [];
+    const currentValue = field.value;
+    const optionMarkup = normalizedOptions
+      .map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`)
+      .join("");
+
+    field.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>${optionMarkup}`;
+    field.disabled = normalizedOptions.length === 0;
+    field.value = normalizedOptions.includes(currentValue) ? currentValue : "";
+  }
+
+  function normalizeLocationKey(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function getLocalityConfig() {
+    return localityDirectory[normalizeLocationKey(loanForm?.elements?.district?.value)] || null;
+  }
+
+  function getLocalityOptions(group, value) {
+    return group?.[normalizeLocationKey(value)] || [];
+  }
+
+  function populateLocalitySuggestions({ resetChildren = false } = {}) {
     if (!loanForm) {
       return;
     }
 
-    const districtValue = String(loanForm.elements.district?.value || "").trim().toLowerCase();
-    const isCityAddress = cityDistrictNames.has(districtValue) || districtValue.includes(" city");
-    const labelNode = document.getElementById("address-subcounty-label");
+    const config = getLocalityConfig();
     const subcountyField = loanForm.elements.subcounty;
+    const parishField = loanForm.elements.parish;
+    const villageField = loanForm.elements.village;
 
-    if (labelNode) {
-      labelNode.textContent = isCityAddress ? "Division / Ward" : "Subcounty / Town council";
+    if (!config) {
+      updateSelectOptions(subcountyField, [], "Select your sub-county / town council");
+      updateSelectOptions(parishField, [], "Select your parish / ward");
+      updateSelectOptions(villageField, [], "Select your village / zone");
+      return;
     }
-    if (subcountyField) {
-      subcountyField.placeholder = isCityAddress
-        ? "e.g. Nakawa Division or Central Ward"
-        : "e.g. Bardege-Layibi or Nyendo-Mukungwe";
+
+    const subcountyOptions = config.subcounties || [];
+
+    if (resetChildren) {
+      if (subcountyField) subcountyField.value = "";
+      if (parishField) parishField.value = "";
+      if (villageField) villageField.value = "";
+    }
+
+    updateSelectOptions(subcountyField, subcountyOptions, "Select your sub-county / town council");
+
+    const activeSubcounty = subcountyField?.value || "";
+    const parishOptions = getLocalityOptions(config.parishes, activeSubcounty);
+
+    if (resetChildren) {
+      if (parishField) parishField.value = "";
+      if (villageField) villageField.value = "";
+    }
+
+    updateSelectOptions(parishField, parishOptions, "Select your parish / ward");
+
+    const activeParish = parishField?.value || "";
+    const villageOptions = getLocalityOptions(config.villages, activeParish);
+    updateSelectOptions(villageField, villageOptions, "Select your village / zone");
+  }
+
+  function updateAddressLabel() {
+    return;
+  }
+
+  function updateApplicantCategoryCopy(category, isEmploymentCategory, isBusinessCategory, isOtherCategory) {
+    const sectionHeading = document.getElementById("employment-section-heading");
+    const employmentNameLabel = document.getElementById("employment-name-label");
+    const employmentPositionLabel = document.getElementById("employment-position-label");
+    const employmentDurationLabel = document.getElementById("employment-duration-label");
+    const businessNameLabel = document.getElementById("business-name-label");
+    const businessCategoryLabel = document.getElementById("business-category-label");
+    const businessRegistrationLabel = document.getElementById("business-registration-label");
+
+    if (sectionHeading) {
+      sectionHeading.textContent = isEmploymentCategory
+        ? "Employment details"
+        : isBusinessCategory
+        ? "Business details"
+        : isOtherCategory
+        ? "Income source details"
+        : "Employment / business details";
+    }
+
+    if (employmentNameLabel) {
+      employmentNameLabel.textContent = isOtherCategory
+        ? "Income source / organization"
+        : category === "civil_servant"
+        ? "Ministry / institution"
+        : "Employer / organization";
+    }
+    if (employmentPositionLabel) {
+      employmentPositionLabel.textContent = isOtherCategory
+        ? "Role / activity"
+        : category === "civil_servant"
+        ? "Title / salary scale"
+        : "Position / grade";
+    }
+    if (employmentDurationLabel) {
+      employmentDurationLabel.textContent = isOtherCategory
+        ? "Time in activity"
+        : category === "civil_servant"
+        ? "Years in service"
+        : "Length of service";
+    }
+    if (businessNameLabel) {
+      businessNameLabel.textContent = category === "service_provider" ? "Service brand / trade name" : "Business or service name";
+    }
+    if (businessCategoryLabel) {
+      businessCategoryLabel.textContent = category === "service_provider" ? "Service category" : "Business / service category";
+    }
+    if (businessRegistrationLabel) {
+      businessRegistrationLabel.textContent = category === "service_provider" ? "License / registration number" : "Registration number";
     }
   }
 
@@ -297,6 +552,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       "businessCategory",
       ...(category === "self_employed" ? ["businessRegistrationNumber"] : [])
     ]);
+    updateApplicantCategoryCopy(category, isEmploymentCategory, isBusinessCategory, isOtherCategory);
 
     if (monthlyIncomeLabel) {
       monthlyIncomeLabel.textContent = isEmploymentCategory
@@ -325,6 +581,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     updateAddressLabel();
+    populateLocalitySuggestions();
   }
 
   function setGuestMode() {
@@ -348,6 +605,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         openModal(false);
       };
     });
+  }
+
+  function setNonBorrowerMode(account) {
+    setGuestMode();
+    if (loanHelpText) {
+      loanHelpText.textContent = "Borrower applications can only be submitted from a borrower account.";
+    }
+    if (feedback) {
+      feedback.textContent = `You are signed in as ${String(account?.role || "another account").replace(/_/g, " ")}. Sign out and log in with a borrower account to apply.`;
+      feedback.dataset.lockReason = feedback.textContent;
+    }
+    if (loanSubmitButton) {
+      loanSubmitButton.disabled = true;
+      loanSubmitButton.textContent = "Borrower login required";
+    }
   }
 
   window.CraneContactActions?.bind?.();
@@ -420,6 +692,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     return loans.filter((loan) => repayableLoanStatuses.has(loan.status));
   }
 
+  function getLoanInterestRate(loan) {
+    const interestRate = Number(loan?.interest_rate ?? loan?.interestRate ?? defaultLoanInterestRate);
+    return Number.isFinite(interestRate) && interestRate > 0 ? interestRate : defaultLoanInterestRate;
+  }
+
+  function getLoanTotalBalance(loan) {
+    const amount = Number(loan?.amount || 0);
+    return amount + (amount * getLoanInterestRate(loan)) / 100;
+  }
+
   function getSelectedRepayableLoan(loans = []) {
     const repayableLoans = getRepayableLoans(loans);
     if (!repayableLoans.length) {
@@ -486,13 +768,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const installmentDue = Number(selectedLoan.amount || 0) / Math.max(Number(selectedLoan.term_months || 1), 1);
-    const outstandingPrincipal = Number(selectedLoan.amount || 0);
+    const totalLoanBalance = getLoanTotalBalance(selectedLoan);
+    const installmentDue = totalLoanBalance / Math.max(Number(selectedLoan.term_months || 1), 1);
+    const outstandingPrincipal = totalLoanBalance;
     const partialAmount = Number(partialPaymentInput?.value || 0);
     const serviceFee = 0;
     const totalToday = isPartialPayment && partialAmount > 0 ? partialAmount + serviceFee : installmentDue + serviceFee;
-    const payoffBenefit = Math.round(outstandingPrincipal * 0.02);
-    const totalPayoff = Math.max(outstandingPrincipal - payoffBenefit, 0);
+    const payoffBenefit = Math.round(Number(selectedLoan.amount || 0) * 0.02);
+    const totalPayoff = Math.max(totalLoanBalance - payoffBenefit, 0);
 
     updatePaymentSummaryValues({
       installmentDue,
@@ -523,7 +806,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                   <strong>${loan.application_code}</strong>
                   <span>${loan.status.replace(/_/g, " ")}</span>
                 </div>
-                <p>${formatCurrency(loan.amount)} over ${loan.term_months} months</p>
+                <p>${formatCurrency(loan.amount)} over ${loan.term_months} months at ${getLoanInterestRate(loan)}%</p>
               </article>
             `
           )
@@ -540,7 +823,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                   <strong>${loan.application_code}</strong>
                   <span>${loan.status.replace(/_/g, " ")}</span>
                 </div>
-                <p>${formatCurrency(loan.amount)} • ${loan.purpose.replace(/_/g, " ")}</p>
+                <p>${formatCurrency(loan.amount)} | ${loan.purpose.replace(/_/g, " ")} | ${getLoanInterestRate(loan)}%</p>
               </article>
             `
           )
@@ -737,8 +1020,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function loadDashboard(showToast = false) {
     const account = window.CraneAuth.getAccount();
-    if (!account || account.role !== "user") {
+    if (!account) {
       setGuestMode();
+      return;
+    }
+    if (account.role !== "user") {
+      setNonBorrowerMode(account);
       return;
     }
     dashboardData = await window.CraneApi.userDashboard();
@@ -1109,6 +1396,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       openModal(false);
       return;
     }
+    if (account.role !== "user") {
+      const roleMessage = "This loan form is only available to borrower accounts. Sign out of the admin session and log in as a borrower.";
+      if (feedback) {
+        feedback.textContent = roleMessage;
+        feedback.dataset.lockReason = roleMessage;
+      }
+      window.CraneNotify.warning(roleMessage);
+      return;
+    }
 
     const accessState = getLoanApplicationAccessState(account, dashboardData?.loans || []);
     if (!accessState.canApply) {
@@ -1182,7 +1478,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   loanForm?.elements?.applicantCategory?.addEventListener("change", updateLoanApplicationRules);
   loanForm?.elements?.amount?.addEventListener("input", updateLoanApplicationRules);
-  loanForm?.elements?.district?.addEventListener("input", updateLoanApplicationRules);
+  const handleDistrictSelection = () => {
+    populateLocalitySuggestions({ resetChildren: true });
+    updateLoanApplicationRules();
+  };
+  loanForm?.elements?.district?.addEventListener("change", handleDistrictSelection);
+  loanForm?.elements?.district?.addEventListener("input", handleDistrictSelection);
+  loanForm?.elements?.subcounty?.addEventListener("change", () => {
+    if (loanForm?.elements?.parish) {
+      loanForm.elements.parish.value = "";
+    }
+    if (loanForm?.elements?.village) {
+      loanForm.elements.village.value = "";
+    }
+    populateLocalitySuggestions();
+  });
+  loanForm?.elements?.parish?.addEventListener("change", () => {
+    if (loanForm?.elements?.village) {
+      loanForm.elements.village.value = "";
+    }
+    populateLocalitySuggestions();
+  });
   updateLoanApplicationRules();
 
   // Play intro animation first, then load dashboard
