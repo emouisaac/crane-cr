@@ -659,7 +659,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (action === "open-login") {
         event.preventDefault();
-        await window.CraneAuth.logout("super-admin-login.html");
+        await window.CraneAuth.logout("/super-admin-login");
         return;
       }
 
@@ -899,7 +899,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.getElementById("super-logout-panel-btn").addEventListener("click", () => {
-    window.CraneAuth.logout("super-admin-login.html");
+    window.CraneAuth.logout("/super-admin-login");
   });
 
   document.addEventListener("click", (event) => {
@@ -926,11 +926,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.addEventListener("crane:document:updated", () => scheduleDashboardRefresh());
   window.addEventListener("crane:account:status", () => scheduleDashboardRefresh());
   window.addEventListener("crane:session:revoked", () => {
-    window.CraneAuth.logout("super-admin-login.html");
+    window.CraneAuth.logout("/super-admin-login");
   });
 
   await window.CraneAuth.bootstrap();
-  const account = await window.CraneAuth.requireRole(["super_admin"], "super-admin-login.html");
+  const account = await window.CraneAuth.requireRole(["super_admin"], "/super-admin-login");
   if (!account) {
     return;
   }

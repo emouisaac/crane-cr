@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const password = document.getElementById("super-admin-password").value.trim();
       const response = await window.CraneApi.loginSuperAdmin({ username, password });
       window.CraneAuth.setSession(response);
-      window.location.href = "super-admin.html";
+      window.location.href = "/super-admin";
     } catch (error) {
       window.CraneNotify.error(error.message || "Super admin sign-in failed.");
     } finally {

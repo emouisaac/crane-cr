@@ -4,12 +4,12 @@
   function getLogoutPath() {
     const pathname = global.location.pathname || "";
     if (pathname.includes("super-admin")) {
-      return "super-admin-login.html";
+      return "/super-admin-login";
     }
     if (pathname.includes("admin")) {
-      return "admin-login.html";
+      return "/admin-login";
     }
-    return "index.html";
+    return "/index.html";
   }
 
   function connect() {

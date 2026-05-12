@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const pin = document.getElementById("admin-pin").value.trim();
       const response = await window.CraneApi.loginAdmin({ username, pin });
       window.CraneAuth.setSession(response);
-      window.location.href = "admin.html";
+      window.location.href = "/admin";
     } catch (error) {
       window.CraneNotify.error(error.message || "Admin sign-in failed.");
     } finally {
