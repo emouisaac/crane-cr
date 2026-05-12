@@ -32,18 +32,48 @@ document.addEventListener("DOMContentLoaded", async () => {
   const registerForm = document.getElementById("user-register-form");
   const loanForm = document.getElementById("loan-request-form");
   const feedback = document.querySelector(".submission-feedback");
+  const notificationPanel = document.querySelector(".notification-panel");
+  const notificationList = notificationPanel?.querySelector(".notifications-list");
   const loanSubmitButton = loanForm?.querySelector('button[type="submit"]');
   const loanHelpText = loanForm?.querySelector(".form-help-text");
+  const statusPillButtons = Array.from(document.querySelectorAll(".loan-status-pills .status-pill"));
+  const paymentLoanSelect = document.querySelector("[data-payment-loan-select]");
+  const partialPaymentInput = document.querySelector("[data-payment-partial-input]");
+  const partialPaymentGroup = partialPaymentInput?.closest(".form-group");
+  const paymentStatusNote = document.querySelector("[data-payment-status-note]");
+  const paymentInstallmentDue = document.querySelector("[data-payment-installment-due]");
+  const paymentServiceFee = document.querySelector("[data-payment-service-fee]");
+  const paymentTotalToday = document.querySelector("[data-payment-total-today]");
+  const earlyOutstandingPrincipal = document.querySelector("[data-early-outstanding-principal]");
+  const earlyPayoffBenefit = document.querySelector("[data-early-payoff-benefit]");
+  const earlyTotalPayoff = document.querySelector("[data-early-total-payoff]");
+  const earlyRepayButton = document.querySelector("[data-early-repay-button]");
   let dashboardData = null;
   let dashboardRefreshTimer = null;
+  let currentLoanFilter = "all";
   const processingLoanStatuses = new Set(["submitted", "under_review", "verification"]);
   const existingLoanStatuses = new Set(["approved", "disbursed"]);
   const liveLoanStatuses = new Set([...processingLoanStatuses, ...existingLoanStatuses]);
+  const repayableLoanStatuses = new Set(["approved", "disbursed"]);
+  const completedLoanStatuses = new Set(["closed"]);
   const reapplicationDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
   const defaultLoanHelpText = "Status will be updated once admin review begins.";
 
   function formatCurrency(value) {
     return new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(Number(value || 0));
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function createEmptyState(message) {
+    return `<div class="panel-empty-state compact">${escapeHtml(message)}</div>`;
   }
 
   function addDays(dateValue, days) {
@@ -163,47 +193,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function openContactModal() {
     contactModal?.classList.add("active");
-  }
-
-  function updateLiveStatusFAB(status, count = 0) {
-    const fab = document.querySelector(".live-status-fab");
-    const titleEl = fab?.querySelector(".live-status-title");
-    const badgeEl = fab?.querySelector(".live-status-badge");
-    
-    if (titleEl) {
-      titleEl.textContent = status;
-    }
-    if (badgeEl && count > 0) {
-      badgeEl.textContent = count;
-      badgeEl.style.display = "block";
-    } else if (badgeEl) {
-      badgeEl.style.display = "none";
-    }
-  }
-
-  function describeRealtimeActivity(eventName, payload) {
-    switch (eventName) {
-      case "notification:new":
-        return payload?.title ? `${payload.title}: ${payload.message || "New activity detected."}` : "New notification detected.";
-      case "loan:created":
-        return payload?.application_code ? `Loan ${payload.application_code} was submitted.` : "A new loan request was submitted.";
-      case "loan:updated":
-        return payload?.application_code
-          ? `Loan ${payload.application_code} is now ${String(payload.status || "updated").replace(/_/g, " ")}.`
-          : "A loan application was updated.";
-      case "document:updated":
-        return payload?.document_type
-          ? `${String(payload.document_type).replace(/_/g, " ")} document was reviewed.`
-          : "A document update was received.";
-      case "user:updated":
-        return "Your account profile was updated.";
-      case "account:status":
-        return payload?.status ? `Account status changed to ${payload.status}.` : "Account status changed.";
-      case "account:role":
-        return "Admin role access was updated.";
-      default:
-        return "Live account activity detected.";
-    }
   }
 
   function scheduleDashboardRefresh(showToast = false) {
@@ -343,6 +332,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.querySelector(".loan-balance-amount").textContent = "UGX 0";
     document.querySelector(".notification-badge").textContent = "0";
     document.querySelector(".snapshot-badge").textContent = "Awaiting sign in";
+    renderLoans([]);
+    renderNotifications([]);
+    renderPaymentState([]);
     updateLoanApplicationAvailability(null, []);
     document.querySelectorAll('[data-action="open-login"]').forEach((item) => {
       const labelNode = item.querySelector("span");
@@ -360,10 +352,167 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.CraneContactActions?.bind?.();
 
+  function isOverdueLoan(_loan) {
+    return false;
+  }
+
+  function getLoansForFilter(loans, filter = currentLoanFilter) {
+    switch (filter) {
+      case "active":
+        return loans.filter((loan) => liveLoanStatuses.has(loan.status));
+      case "overdue":
+        return loans.filter((loan) => isOverdueLoan(loan));
+      case "completed":
+        return loans.filter((loan) => completedLoanStatuses.has(loan.status));
+      case "all":
+      default:
+        return loans;
+    }
+  }
+
+  function getEmptyLoanFilterMessage(filter) {
+    switch (filter) {
+      case "active":
+        return "No active loan is available right now.";
+      case "overdue":
+        return "No overdue loan is currently flagged on your account.";
+      case "completed":
+        return "No completed loan is available in your history yet.";
+      case "all":
+      default:
+        return "Loan history will appear here after your first submission.";
+    }
+  }
+
+  function setLoanFilter(nextFilter = "all") {
+    currentLoanFilter = nextFilter;
+    statusPillButtons.forEach((button) => {
+      button.classList.toggle("active", button.dataset.status === nextFilter);
+    });
+    renderLoans(dashboardData?.loans || []);
+  }
+
+  function renderNotificationFeed(notifications) {
+    if (!notificationList) {
+      return;
+    }
+
+    notificationList.innerHTML = notifications.length
+      ? notifications
+          .map(
+            (item) => `
+              <article class="notification-item ${item.read_at ? "" : "is-unread"}" data-notification-id="${item.id}">
+                <div class="role-item-head">
+                  <div>
+                    <strong>${escapeHtml(item.title || "Notification")}</strong>
+                    <div class="role-list-note">${escapeHtml(item.message || "")}</div>
+                  </div>
+                  <span class="role-chip ${item.read_at ? "info" : "warning"}">${item.read_at ? "read" : "new"}</span>
+                </div>
+              </article>
+            `
+          )
+          .join("")
+      : createEmptyState("No notifications yet. New account alerts will appear here.");
+  }
+
+  function getRepayableLoans(loans = []) {
+    return loans.filter((loan) => repayableLoanStatuses.has(loan.status));
+  }
+
+  function getSelectedRepayableLoan(loans = []) {
+    const repayableLoans = getRepayableLoans(loans);
+    if (!repayableLoans.length) {
+      return null;
+    }
+
+    const selectedLoanId = paymentLoanSelect?.value;
+    return repayableLoans.find((loan) => loan.id === selectedLoanId) || repayableLoans[0];
+  }
+
+  function updatePaymentSummaryValues({ installmentDue = 0, serviceFee = 0, totalToday = 0, outstandingPrincipal = 0, payoffBenefit = 0, totalPayoff = 0 }) {
+    if (paymentInstallmentDue) paymentInstallmentDue.textContent = formatCurrency(installmentDue);
+    if (paymentServiceFee) paymentServiceFee.textContent = formatCurrency(serviceFee);
+    if (paymentTotalToday) paymentTotalToday.textContent = formatCurrency(totalToday);
+    if (earlyOutstandingPrincipal) earlyOutstandingPrincipal.textContent = formatCurrency(outstandingPrincipal);
+    if (earlyPayoffBenefit) earlyPayoffBenefit.textContent = formatCurrency(payoffBenefit);
+    if (earlyTotalPayoff) earlyTotalPayoff.textContent = formatCurrency(totalPayoff);
+  }
+
+  function renderPaymentState(loans = []) {
+    const repayableLoans = getRepayableLoans(loans);
+    const processingLoans = loans.filter((loan) => processingLoanStatuses.has(loan.status));
+    const selectedLoan = getSelectedRepayableLoan(loans);
+    const paymentType = document.querySelector('input[name="payment-type"]:checked')?.value || "full";
+
+    if (paymentLoanSelect) {
+      paymentLoanSelect.innerHTML = repayableLoans.length
+        ? repayableLoans.map((loan) => `<option value="${loan.id}">${loan.application_code} - ${formatCurrency(loan.amount)}</option>`).join("")
+        : '<option value="">No outstanding loans</option>';
+
+      if (selectedLoan) {
+        paymentLoanSelect.value = selectedLoan.id;
+      }
+    }
+
+    const statusMessage = repayableLoans.length
+      ? `Loan ${selectedLoan?.application_code || repayableLoans[0].application_code} is ready for repayment.`
+      : processingLoans.length
+      ? "Your current loan is still under review. Payment will open after approval or disbursement."
+      : loans.some((loan) => completedLoanStatuses.has(loan.status))
+      ? "Your recent loans are completed or closed. No payment is due right now."
+      : "No approved or disbursed loan is available for payment yet.";
+
+    if (paymentStatusNote) {
+      paymentStatusNote.textContent = statusMessage;
+    }
+
+    const isPartialPayment = paymentType === "partial";
+    if (partialPaymentGroup) {
+      partialPaymentGroup.style.display = isPartialPayment && selectedLoan ? "" : "none";
+    }
+    if (partialPaymentInput) {
+      partialPaymentInput.disabled = !isPartialPayment || !selectedLoan;
+      if (!selectedLoan) {
+        partialPaymentInput.value = "";
+      }
+    }
+
+    if (!selectedLoan) {
+      updatePaymentSummaryValues({});
+      if (earlyRepayButton) {
+        earlyRepayButton.disabled = true;
+      }
+      return;
+    }
+
+    const installmentDue = Number(selectedLoan.amount || 0) / Math.max(Number(selectedLoan.term_months || 1), 1);
+    const outstandingPrincipal = Number(selectedLoan.amount || 0);
+    const partialAmount = Number(partialPaymentInput?.value || 0);
+    const serviceFee = 0;
+    const totalToday = isPartialPayment && partialAmount > 0 ? partialAmount + serviceFee : installmentDue + serviceFee;
+    const payoffBenefit = Math.round(outstandingPrincipal * 0.02);
+    const totalPayoff = Math.max(outstandingPrincipal - payoffBenefit, 0);
+
+    updatePaymentSummaryValues({
+      installmentDue,
+      serviceFee,
+      totalToday,
+      outstandingPrincipal,
+      payoffBenefit,
+      totalPayoff
+    });
+
+    if (earlyRepayButton) {
+      earlyRepayButton.disabled = false;
+    }
+  }
+
   function renderLoans(loans) {
     const loansList = document.querySelector(".loans-list");
     const loansDetailList = document.querySelector(".loans-detail-list");
     const activeLoans = loans.filter((loan) => liveLoanStatuses.has(loan.status));
+    const filteredLoans = getLoansForFilter(loans);
 
     loansList.innerHTML = activeLoans.length
       ? activeLoans
@@ -382,7 +531,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       : '<div class="panel-empty-state compact">No active loan request yet. Submit an application to begin.</div>';
 
     loansDetailList.innerHTML = loans.length
-      ? loans
+      ? filteredLoans.length
+        ? filteredLoans
           .map(
             (loan) => `
               <article class="loan-card detail">
@@ -395,17 +545,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             `
           )
           .join("")
-      : '<div class="panel-empty-state compact">Loan history will appear here after your first submission.</div>';
-
-    const loanSelect = document.querySelector(".payment-form select");
-    loanSelect.innerHTML = activeLoans.length
-      ? activeLoans.map((loan) => `<option value="${loan.id}">${loan.application_code} - ${formatCurrency(loan.amount)}</option>`).join("")
-      : '<option value="">No outstanding loans</option>';
+        : createEmptyState(getEmptyLoanFilterMessage(currentLoanFilter))
+      : createEmptyState("Loan history will appear here after your first submission.");
   }
 
   function renderNotifications(notifications) {
     const unread = notifications.filter((item) => !item.read_at).length;
     document.querySelector(".notification-badge").textContent = String(unread);
+    renderNotificationFeed(notifications);
   }
 
   function renderOverview(data) {
@@ -430,16 +577,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderLoans(loans);
     renderNotifications(notifications);
+    renderPaymentState(loans);
     updateLoanApplicationAvailability(account, loans);
-
-    let statusMessage = "Checking your loan application status…";
-    if (activeLoans.length > 0) {
-      const firstLoan = activeLoans[0];
-      statusMessage = `Loan ${firstLoan.application_code}: ${firstLoan.status.replace(/_/g, " ")} • ${formatCurrency(firstLoan.amount)}`;
-    } else if (loans.length > 0) {
-      statusMessage = `${loans.length} loan(s) in history • Ready for new application`;
-    }
-    updateLiveStatusFAB(statusMessage, notifications.filter((n) => !n.read_at).length);
 
     document.querySelectorAll('[data-action="open-login"]').forEach((item) => {
       const labelNode = item.querySelector("span");
@@ -678,12 +817,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     setActiveView("get-loan");
   });
   document.querySelector(".refresh-btn")?.addEventListener("click", () => loadDashboard(true));
+  document.querySelectorAll('[data-loans-action="view-all"]').forEach((button) => button.addEventListener("click", () => {
+    if (!isAuthenticated()) {
+      openModal(false);
+      return;
+    }
+    setActiveView("loans");
+    setLoanFilter("all");
+  }));
+  document.querySelectorAll('[data-loans-action="review-loans"]').forEach((button) => button.addEventListener("click", () => {
+    if (!isAuthenticated()) {
+      openModal(false);
+      return;
+    }
+    setActiveView("loans");
+    setLoanFilter("active");
+  }));
   document.querySelectorAll('[data-quick-box="active"]').forEach((button) => button.addEventListener("click", () => {
     if (!isAuthenticated()) {
       openModal(false);
       return;
     }
     setActiveView("loans");
+    setLoanFilter("active");
+  }));
+  document.querySelectorAll('[data-quick-box="overdue"]').forEach((button) => button.addEventListener("click", () => {
+    if (!isAuthenticated()) {
+      openModal(false);
+      return;
+    }
+    setActiveView("loans");
+    setLoanFilter("overdue");
   }));
   document.querySelectorAll('[data-quick-box="repay"]').forEach((button) => button.addEventListener("click", () => {
     if (!isAuthenticated()) {
@@ -748,16 +912,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Header notification button
-  const notificationButtons = document.querySelectorAll(".header-actions .icon-btn");
-  if (notificationButtons.length > 0) {
-    notificationButtons[1]?.addEventListener("click", () => {
-      if (!isAuthenticated()) {
-        openModal(false);
-        return;
-      }
-      document.querySelector(".notification-panel")?.classList.toggle("active");
-    });
-  }
+  document.querySelector(".header-actions .icon-btn")?.addEventListener("click", () => {
+    if (!isAuthenticated()) {
+      openModal(false);
+      return;
+    }
+    notificationPanel?.classList.toggle("active");
+  });
 
   // Close profile panel when clicking overlay
   document.addEventListener("click", (e) => {
@@ -783,6 +944,66 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Notification panel close
   document.querySelector(".notification-panel .close-btn")?.addEventListener("click", () => {
     document.querySelector(".notification-panel")?.classList.remove("active");
+  });
+
+  statusPillButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!isAuthenticated()) {
+        openModal(false);
+        return;
+      }
+      setLoanFilter(button.dataset.status || "all");
+    });
+  });
+
+  paymentLoanSelect?.addEventListener("change", () => {
+    renderPaymentState(dashboardData?.loans || []);
+  });
+
+  partialPaymentInput?.addEventListener("input", () => {
+    renderPaymentState(dashboardData?.loans || []);
+  });
+
+  document.querySelectorAll('input[name="payment-type"]').forEach((input) => {
+    input.addEventListener("change", () => {
+      renderPaymentState(dashboardData?.loans || []);
+    });
+  });
+
+  notificationList?.addEventListener("click", async (event) => {
+    const item = event.target.closest("[data-notification-id]");
+    if (!item) {
+      return;
+    }
+
+    const notificationId = item.dataset.notificationId;
+    const notification = dashboardData?.notifications?.find((entry) => entry.id === notificationId);
+    if (!notification || notification.read_at) {
+      return;
+    }
+
+    try {
+      const response = await window.CraneApi.markNotificationRead(notificationId);
+      const updatedNotification = response.notification;
+      dashboardData = dashboardData
+        ? {
+            ...dashboardData,
+            notifications: (dashboardData.notifications || []).map((entry) => (entry.id === notificationId ? updatedNotification : entry)),
+            summary: {
+              ...(dashboardData.summary || {}),
+              unreadNotifications: Math.max(0, (dashboardData.summary?.unreadNotifications || 0) - 1)
+            }
+          }
+        : dashboardData;
+
+      renderNotifications(dashboardData?.notifications || []);
+      if (dashboardData) {
+        renderOverview(dashboardData);
+        renderProfile(window.CraneAuth.getAccount() || dashboardData.profile, dashboardData);
+      }
+    } catch (error) {
+      window.CraneNotify.error(error.message || "Unable to update notification.");
+    }
   });
 
   // Profile panel close button
@@ -826,17 +1047,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector(".contact-modal-overlay")?.addEventListener("click", (e) => {
     if (e.target.classList.contains("contact-modal-overlay")) {
       document.querySelector(".contact-modal-overlay")?.classList.remove("active");
-    }
-  });
-
-  // Live status FAB click handler
-  document.querySelector(".live-status-fab")?.addEventListener("click", () => {
-    const activeView = document.querySelector(".view-section.active");
-    if (activeView?.id === "overview-view") {
-      window.CraneNotify.info("Status updated. Check your loan details below.");
-    } else {
-      setActiveView("overview");
-      window.CraneNotify.info("Loading your loan status...");
     }
   });
 
@@ -953,13 +1163,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       feedback.textContent = error.message || "Unable to submit loan request.";
       window.CraneNotify.error(error.message || "Submission failed.");
     }
-  });
-
-  window.addEventListener("crane:realtime:event", (event) => {
-    const eventName = event.detail?.eventName;
-    const payload = event.detail?.payload;
-    const unreadCount = Number(document.querySelector(".notification-badge")?.textContent || "0");
-    updateLiveStatusFAB(describeRealtimeActivity(eventName, payload), unreadCount);
   });
 
   window.addEventListener("crane:notification:new", () => scheduleDashboardRefresh());

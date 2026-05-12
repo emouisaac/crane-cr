@@ -9,6 +9,7 @@ const { createNotification, markNotificationRead } = require("../services/notifi
 const { emitToRole } = require("../services/socket-bus");
 const { logAuditEvent } = require("../services/audit-service");
 const { getIpAddress } = require("../utils/http");
+const { AppError } = require("../utils/errors");
 
 async function dashboard(req, res) {
   const loans = await getUserLoans(req.auth.id);
@@ -54,6 +55,10 @@ async function applyLoan(req, res) {
 }
 
 async function uploadDocument(req, res) {
+  if (!req.file) {
+    throw new AppError(400, "Document image is required.");
+  }
+
   const loanResult = await query(
     `SELECT * FROM loan_applications WHERE id = $1 AND user_id = $2`,
     [req.params.loanId, req.auth.id]
@@ -75,8 +80,19 @@ async function uploadDocument(req, res) {
     title: "New verification document uploaded",
     message: `${req.auth.full_name} uploaded ${req.body.documentType} for ${loan.application_code}.`,
     eventType: "document.uploaded",
-    payload: { loanId: loan.id, documentId: document.id }
+    payload: { loanId: loan.id, documentId: document.id, applicationCode: loan.application_code, documentType: req.body.documentType }
   });
+
+  await createNotification({
+    audienceRole: "super_admin",
+    title: "New verification document uploaded",
+    message: `${req.auth.full_name} uploaded ${req.body.documentType} for ${loan.application_code}.`,
+    eventType: "document.uploaded",
+    payload: { loanId: loan.id, documentId: document.id, applicationCode: loan.application_code, documentType: req.body.documentType }
+  });
+
+  emitToRole("admin", "document:updated", document);
+  emitToRole("super_admin", "document:updated", document);
 
   await logAuditEvent({
     actorAccountId: req.auth.id,

@@ -295,7 +295,7 @@
               <div>
                 <h2>Active loans</h2>
               </div>
-              <button type="button" class="text-button">View all</button>
+              <button type="button" class="text-button" data-loans-action="view-all">View all</button>
             </div>
             <div class="loans-list"></div>
           </article>
@@ -350,12 +350,13 @@
               <div>
                 <h2>Make a payment</h2>
               </div>
-              <button type="button" class="text-button">Review loans</button>
+              <button type="button" class="text-button" data-loans-action="review-loans">Review loans</button>
             </div>
             <div class="payment-form">
+              <div class="panel-empty-state compact payment-status-note" data-payment-status-note>Select an active loan to see repayment details.</div>
               <div class="form-group">
                 <label>Loan</label>
-                <select>
+                <select data-payment-loan-select>
                   <option value="">No outstanding loans</option>
                 </select>
               </div>
@@ -374,20 +375,20 @@
               </div>
               <div class="form-group" style="display: none;">
                 <label>Partial amount</label>
-                <input type="number" placeholder="Enter amount">
+                <input type="number" placeholder="Enter amount" data-payment-partial-input>
               </div>
               <div class="payment-summary">
                 <div class="summary-row">
                   <span>Installment due</span>
-                  <strong>UGX 0</strong>
+                  <strong data-payment-installment-due>UGX 0</strong>
                 </div>
                 <div class="summary-row">
                   <span>Service fee</span>
-                  <strong>UGX 0</strong>
+                  <strong data-payment-service-fee>UGX 0</strong>
                 </div>
                 <div class="summary-row total">
                   <span>Total today</span>
-                  <strong>UGX 0</strong>
+                  <strong data-payment-total-today>UGX 0</strong>
                 </div>
               </div>
             </div>
@@ -402,18 +403,18 @@
             <div class="early-repay-details">
               <div class="detail-row">
                 <span>Outstanding principal</span>
-                <strong>UGX 0</strong>
+                <strong data-early-outstanding-principal>UGX 0</strong>
               </div>
               <div class="detail-row">
                 <span>Early payoff benefit</span>
-                <strong>UGX 0</strong>
+                <strong data-early-payoff-benefit>UGX 0</strong>
               </div>
               <div class="detail-row highlight">
                 <span>Total payoff today</span>
-                <strong>UGX 0</strong>
+                <strong data-early-total-payoff>UGX 0</strong>
               </div>
             </div>
-            <button type="button" class="button button-primary full-width">Repay early</button>
+            <button type="button" class="button button-primary full-width" data-early-repay-button>Repay early</button>
           </article>
 
           <article class="card autodebit-setup-card">
@@ -1082,15 +1083,6 @@
         <div class="panel-empty-state">No notifications yet. New account alerts will appear here.</div>
       </div>
     </div>
-
-    <button type="button" class="live-status-fab" aria-label="Live loan status updates" aria-live="polite">
-      <span class="live-status-indicator">
-        <span class="live-dot"></span>
-        LIVE
-      </span>
-      <span class="live-status-title">Checking your loan application status…</span>
-      <span class="live-status-badge" style="display:none;">0</span>
-    </button>
 
     <div class="modal">
       <div class="modal-content">

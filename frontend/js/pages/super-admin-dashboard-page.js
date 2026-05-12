@@ -129,6 +129,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     contactModal?.classList.remove("active");
   }
 
+  function openRequestDocumentsWorkspace() {
+    if (!selectedLoanDetail?.loan) {
+      window.CraneNotify.info("Select an application first.");
+      return;
+    }
+
+    setActiveView("applications");
+    const requestField = document.getElementById("super-request-documents-message");
+    window.setTimeout(() => {
+      requestField?.focus();
+      requestField?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 60);
+  }
+
   function openProfilePanel() {
     let overlay = document.querySelector(".profile-panel-overlay");
     if (!overlay) {
@@ -782,9 +796,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("super-application-detail").addEventListener("click", async (event) => {
     const requestDocumentsButton = event.target.closest("[data-super-open-request-documents]");
     if (requestDocumentsButton) {
-      const requestField = document.getElementById("super-request-documents-message");
-      requestField?.focus();
-      requestField?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (requestDocumentsButton.disabled) {
+        return;
+      }
+      openRequestDocumentsWorkspace();
       return;
     }
 

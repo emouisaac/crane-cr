@@ -202,6 +202,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     contactModal?.classList.remove("active");
   }
 
+  function openRequestDocumentsWorkspace() {
+    if (!selectedLoanDetail?.loan) {
+      window.CraneNotify.info("Select an application first.");
+      return;
+    }
+
+    setActiveView("documents");
+    const requestField = document.getElementById("admin-request-documents-message");
+    window.setTimeout(() => {
+      requestField?.focus();
+      requestField?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 60);
+  }
+
   function createEmptyState(message) {
     return `<div class="panel-empty-state">${escapeHtml(message)}</div>`;
   }
@@ -727,12 +741,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (requestDocumentsButton.disabled) {
         return;
       }
-      setActiveView("documents");
-      const requestField = document.getElementById("admin-request-documents-message");
-      window.setTimeout(() => {
-        requestField?.focus();
-        requestField?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 60);
+      openRequestDocumentsWorkspace();
       return;
     }
 
