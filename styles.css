@@ -539,8 +539,9 @@ select {
   line-height: 1.08;
   text-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
 }
-.offer-title {
-  color: #d1d5db;
+.offer-card .offer-title {
+  color: #374151;
+  text-shadow: none;
 }
 .offer-rate-old,
 .offer-rate-new {
