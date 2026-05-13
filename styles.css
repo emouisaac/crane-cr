@@ -425,14 +425,15 @@ select {
   justify-content: center;
 }
 .offer-card {
-  background: linear-gradient(135deg, #0d8b63 0%, #18aa79 100%);
-  color: white;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(239, 248, 243, 0.98));
+  color: var(--text);
   border-radius: var(--radius-lg);
+  border: 1px solid rgba(13, 139, 99, 0.12);
   padding: 1rem 1.1rem 1.2rem;
   max-width: 350px;
   width: 100%;
   min-height: 332px;
-  box-shadow: 0 20px 40px rgba(13, 139, 99, 0.3);
+  box-shadow: 0 20px 40px rgba(17, 34, 24, 0.1);
   animation: float-up 0.6s ease-out;
   position: relative;
   overflow: hidden;
@@ -446,7 +447,7 @@ select {
   right: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background: radial-gradient(circle, rgba(13, 139, 99, 0.08) 1px, transparent 1px);
   background-size: 50px 50px;
   animation: pulse-bg 20s linear infinite;
   z-index: 0;
@@ -484,7 +485,8 @@ select {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  opacity: 0.9;
+  color: #4b6358;
+  opacity: 1;
 }
 .pulse-badge {
   background: #1cbb7f;
@@ -533,11 +535,11 @@ select {
 }
 .offer-card h3 {
   margin: 0 0 0.55rem;
-  color: rgba(255, 255, 255, 0.98);
+  color: #17352a;
   font-size: 1.38rem;
   font-weight: 800;
   line-height: 1.08;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+  text-shadow: none;
 }
 .offer-card .offer-title {
   color: #374151;
@@ -553,13 +555,13 @@ select {
   border-radius: 999px;
 }
 .offer-rate-old {
-  color: #ffb3b3;
-  background: rgba(132, 12, 12, 0.24);
+  color: #a93434;
+  background: rgba(190, 63, 63, 0.12);
   text-decoration: line-through;
 }
 .offer-rate-new {
-  color: #b6ffd2;
-  background: rgba(8, 94, 42, 0.28);
+  color: #0a6c4d;
+  background: rgba(13, 139, 99, 0.14);
   font-weight: 800;
 }
 .offer-details {
@@ -568,7 +570,8 @@ select {
   gap: 1rem;
   margin: 0.85rem 0 1.2rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(13, 139, 99, 0.08);
+  border: 1px solid rgba(13, 139, 99, 0.08);
   border-radius: var(--radius-md);
   backdrop-filter: blur(10px);
 }
@@ -581,14 +584,17 @@ select {
   font-size: 0.75rem;
   opacity: 0.8;
   text-transform: uppercase;
+  color: #587265;
 }
 .offer-details .detail-value {
   font-size: 1rem;
   font-weight: 700;
+  color: #17352a;
 }
 .offer-message {
   font-size: 0.9rem;
-  opacity: 0.95;
+  color: #587265;
+  opacity: 1;
   margin: auto 0 1rem;
   line-height: 1.4;
 }
