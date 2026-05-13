@@ -70,6 +70,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       CAPABILITIES.APPLICATIONS_VIEW,
       CAPABILITIES.BORROWERS_VIEW,
       CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.DOCUMENTS_VIEW,
       CAPABILITIES.DOCUMENTS_REQUEST,
       CAPABILITIES.COMMENTS_ADD,
       CAPABILITIES.NOTIFICATIONS_VIEW
@@ -88,8 +89,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     ],
     contact_support: [
       CAPABILITIES.DASHBOARD_VIEW,
+      CAPABILITIES.APPLICATIONS_VIEW,
       CAPABILITIES.BORROWERS_VIEW,
       CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.DOCUMENTS_VIEW,
       CAPABILITIES.DOCUMENTS_REQUEST,
       CAPABILITIES.COMMENTS_ADD,
       CAPABILITIES.NOTIFICATIONS_VIEW
@@ -114,8 +117,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     ],
     recovery_officer: [
       CAPABILITIES.DASHBOARD_VIEW,
+      CAPABILITIES.APPLICATIONS_VIEW,
       CAPABILITIES.BORROWERS_VIEW,
       CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.DOCUMENTS_VIEW,
       CAPABILITIES.COMMENTS_ADD,
       CAPABILITIES.NOTIFICATIONS_VIEW
     ],
@@ -124,6 +129,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       CAPABILITIES.APPLICATIONS_VIEW,
       CAPABILITIES.BORROWERS_VIEW,
       CAPABILITIES.ACCOUNTS_PIN_RESET,
+      CAPABILITIES.DOCUMENTS_VIEW,
       CAPABILITIES.COMMENTS_ADD,
       CAPABILITIES.NOTIFICATIONS_VIEW
     ]
@@ -545,7 +551,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     statusNode.textContent = formatStatus(loan.status);
     statusNode.className = `role-status-badge ${statusTone(loan.status)}`;
 
+    const address = loan.address_details || {};
+    const employment = loan.employment_details || {};
     document.getElementById("detail-meta").innerHTML = `
+      <div class="role-meta-card">
+        <span>Borrower</span>
+        <strong>${escapeHtml(loan.user_name || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>NIN / Passport</span>
+        <strong>${escapeHtml(loan.user_national_id || "Not provided")}</strong>
+      </div>
       <div class="role-meta-card">
         <span>Email</span>
         <strong>${escapeHtml(loan.user_email || "Not provided")}</strong>
@@ -555,8 +571,56 @@ document.addEventListener("DOMContentLoaded", async () => {
         <strong>${escapeHtml(loan.user_phone || "Not provided")}</strong>
       </div>
       <div class="role-meta-card">
+        <span>Date of birth</span>
+        <strong>${escapeHtml(address.dateOfBirth || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>District / City</span>
+        <strong>${escapeHtml(address.district || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Sub-county / Town council</span>
+        <strong>${escapeHtml(address.subcounty || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Village / Zone</span>
+        <strong>${escapeHtml(address.parish || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Street / Plot</span>
+        <strong>${escapeHtml(address.village || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
         <span>Purpose</span>
         <strong>${escapeHtml(formatStatus(loan.purpose || "general"))}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Applicant Category</span>
+        <strong>${escapeHtml(formatStatus(loan.applicant_category || "general"))}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Monthly net income</span>
+        <strong>${escapeHtml(formatCurrency(loan.monthly_income || 0))}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Other monthly income</span>
+        <strong>${escapeHtml(formatCurrency(loan.other_monthly_income || 0))}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Existing obligations</span>
+        <strong>${escapeHtml(loan.existing_obligations || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Employer / Business</span>
+        <strong>${escapeHtml(employment.employerName || employment.businessName || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Role / Business category</span>
+        <strong>${escapeHtml(employment.positionGrade || employment.businessCategory || "Not provided")}</strong>
+      </div>
+      <div class="role-meta-card">
+        <span>Service length / Registration</span>
+        <strong>${escapeHtml(employment.lengthOfService || employment.businessRegistrationNumber || "Not provided")}</strong>
       </div>
       <div class="role-meta-card">
         <span>Duplicate Risk</span>

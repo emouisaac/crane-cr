@@ -13,7 +13,7 @@ async function getUserLoans(userId) {
 
 async function getLoanById(loanId) {
   const result = await query(
-    `SELECT l.*, a.full_name AS user_name, a.email AS user_email, a.phone AS user_phone
+    `SELECT l.*, a.full_name AS user_name, a.email AS user_email, a.phone AS user_phone, a.national_id AS user_national_id
      FROM loan_applications l
      JOIN accounts a ON a.id = l.user_id
      WHERE l.id = $1`,
@@ -24,7 +24,7 @@ async function getLoanById(loanId) {
 
 async function getAllLoans() {
   const result = await query(
-    `SELECT l.*, a.full_name AS user_name, a.email AS user_email, a.phone AS user_phone
+    `SELECT l.*, a.full_name AS user_name, a.email AS user_email, a.phone AS user_phone, a.national_id AS user_national_id
      FROM loan_applications l
      JOIN accounts a ON a.id = l.user_id
      ORDER BY l.submitted_at DESC`

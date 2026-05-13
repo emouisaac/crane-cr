@@ -32,6 +32,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const registerForm = document.getElementById("user-register-form");
   const loanForm = document.getElementById("loan-request-form");
   const feedback = document.querySelector(".submission-feedback");
+  const documentUploadFields = loanForm ? Array.from(loanForm.querySelectorAll("[data-document-field]")) : [];
+  const cameraModal = document.getElementById("camera-capture-modal");
+  const cameraVideo = document.getElementById("camera-capture-video");
+  const cameraCanvas = document.getElementById("camera-capture-canvas");
+  const cameraStageMessage = document.getElementById("camera-stage-message");
+  const cameraTitle = document.getElementById("camera-capture-title");
+  const cameraSubtitle = document.getElementById("camera-capture-subtitle");
+  const cameraCaptureButton = document.getElementById("camera-capture-btn");
+  const cameraUseButton = document.getElementById("camera-use-btn");
+  const cameraRetakeButton = document.getElementById("camera-retake-btn");
   const notificationPanel = document.querySelector(".notification-panel");
   const notificationList = notificationPanel?.querySelector(".notifications-list");
   const loanSubmitButton = loanForm?.querySelector('button[type="submit"]');
@@ -53,9 +63,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const offerRateCaption = document.querySelector("[data-offer-rate-caption]");
   const activeViewStorageKey = "crane.activeView";
   const loanDraftStorageKey = "crane.loanRequestDraft";
+  const documentUploadState = new Map();
   let dashboardData = null;
   let dashboardRefreshTimer = null;
   let currentLoanFilter = "all";
+  let activeCameraField = null;
+  let activeCameraStream = null;
+  let capturedCameraBlob = null;
+  let hasAttemptedDocumentValidation = false;
   const processingLoanStatuses = new Set(["submitted", "under_review", "verification"]);
   const existingLoanStatuses = new Set(["approved", "disbursed"]);
   const liveLoanStatuses = new Set([...processingLoanStatuses, ...existingLoanStatuses]);
@@ -103,6 +118,302 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function createEmptyState(message) {
     return `<div class="panel-empty-state compact">${escapeHtml(message)}</div>`;
+  }
+
+  function getDocumentFieldLabel(field) {
+    return field?.querySelector("label")?.textContent?.trim() || "document";
+  }
+
+  function getDocumentInput(field) {
+    return field?.querySelector('input[type="file"]') || null;
+  }
+
+  function getStoredDocumentFiles(fieldOrName) {
+    const name = typeof fieldOrName === "string" ? fieldOrName : getDocumentInput(fieldOrName)?.name;
+    return name ? documentUploadState.get(name) || [] : [];
+  }
+
+  function setStoredDocumentFiles(field, files, options = {}) {
+    const input = getDocumentInput(field);
+    if (!input?.name) {
+      return;
+    }
+
+    const append = Boolean(options.append && field.dataset.multiple === "true");
+    const nextFiles = append ? [...getStoredDocumentFiles(input.name), ...files] : [...files];
+    documentUploadState.set(input.name, nextFiles);
+    updateDocumentUploadStatus(field);
+  }
+
+  function clearStoredDocumentFiles(field) {
+    const input = getDocumentInput(field);
+    if (!input?.name) {
+      return;
+    }
+
+    documentUploadState.delete(input.name);
+    input.value = "";
+    updateDocumentUploadStatus(field);
+  }
+
+  function updateDocumentUploadStatus(field) {
+    const input = getDocumentInput(field);
+    const statusNode = field?.querySelector("[data-upload-status]");
+    if (!input || !statusNode) {
+      return;
+    }
+
+    const files = getStoredDocumentFiles(input.name);
+    const isRequired = field.dataset.required === "true";
+    const hasFiles = files.length > 0;
+
+    field.classList.toggle("has-file", hasFiles);
+    field.classList.toggle("is-required-missing", hasAttemptedDocumentValidation && isRequired && !hasFiles);
+
+    if (!hasFiles) {
+      statusNode.textContent = isRequired ? "Required: add a clear image before submitting." : "No file selected yet.";
+      return;
+    }
+
+    if (files.length === 1) {
+      statusNode.textContent = `Ready: ${files[0].name}`;
+      return;
+    }
+
+    statusNode.textContent = `Ready: ${files.length} files selected`;
+  }
+
+  function initializeDocumentUploadState() {
+    documentUploadFields.forEach((field) => updateDocumentUploadStatus(field));
+  }
+
+  function resetDocumentUploadState() {
+    hasAttemptedDocumentValidation = false;
+    documentUploadState.clear();
+    documentUploadFields.forEach((field) => {
+      const input = getDocumentInput(field);
+      if (input) {
+        input.value = "";
+      }
+      updateDocumentUploadStatus(field);
+    });
+  }
+
+  function validateDocumentUploads() {
+    hasAttemptedDocumentValidation = true;
+    documentUploadFields.forEach((field) => updateDocumentUploadStatus(field));
+    const missingFields = documentUploadFields.filter((field) => field.dataset.required === "true" && getStoredDocumentFiles(field).length === 0);
+    if (!missingFields.length) {
+      return true;
+    }
+
+    const labels = missingFields.map((field) => getDocumentFieldLabel(field));
+    const message = `Add the required document photo${labels.length > 1 ? "s" : ""}: ${labels.join(", ")}.`;
+    if (feedback) {
+      feedback.textContent = message;
+    }
+    window.CraneNotify.warning(message);
+    missingFields[0]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return false;
+  }
+
+  function stopCameraStream() {
+    if (!activeCameraStream) {
+      return;
+    }
+
+    activeCameraStream.getTracks().forEach((track) => track.stop());
+    activeCameraStream = null;
+  }
+
+  function resetCameraStageForLiveFeed() {
+    if (cameraCanvas) {
+      cameraCanvas.hidden = true;
+    }
+    if (cameraVideo) {
+      cameraVideo.hidden = false;
+    }
+    if (cameraStageMessage) {
+      cameraStageMessage.hidden = true;
+      cameraStageMessage.textContent = "";
+    }
+    if (cameraCaptureButton) {
+      cameraCaptureButton.hidden = false;
+      cameraCaptureButton.disabled = false;
+    }
+    if (cameraRetakeButton) {
+      cameraRetakeButton.hidden = true;
+    }
+    if (cameraUseButton) {
+      cameraUseButton.hidden = true;
+    }
+  }
+
+  function showCameraStageMessage(message) {
+    if (cameraStageMessage) {
+      cameraStageMessage.textContent = message;
+      cameraStageMessage.hidden = false;
+    }
+    if (cameraVideo) {
+      cameraVideo.hidden = true;
+      cameraVideo.srcObject = null;
+    }
+    if (cameraCanvas) {
+      cameraCanvas.hidden = true;
+    }
+    if (cameraCaptureButton) {
+      cameraCaptureButton.disabled = true;
+    }
+    if (cameraRetakeButton) {
+      cameraRetakeButton.hidden = true;
+    }
+    if (cameraUseButton) {
+      cameraUseButton.hidden = true;
+    }
+  }
+
+  async function startCameraStreamForField(field) {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      showCameraStageMessage("This browser cannot open an in-app camera here. Use Upload photo instead.");
+      return;
+    }
+
+    stopCameraStream();
+    resetCameraStageForLiveFeed();
+    capturedCameraBlob = null;
+
+    const facingMode = field?.dataset.cameraFacing === "user" ? "user" : "environment";
+
+    try {
+      activeCameraStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+
+      if (cameraVideo) {
+        cameraVideo.srcObject = activeCameraStream;
+        await cameraVideo.play();
+      }
+    } catch (_error) {
+      showCameraStageMessage("Camera access was blocked or unavailable. You can still use Upload photo from this form.");
+    }
+  }
+
+  async function openCameraModalForField(field) {
+    activeCameraField = field;
+    capturedCameraBlob = null;
+
+    if (cameraTitle) {
+      cameraTitle.textContent = `Capture ${getDocumentFieldLabel(field).toLowerCase()}`;
+    }
+    if (cameraSubtitle) {
+      cameraSubtitle.textContent = field.dataset.multiple === "true"
+        ? "Take one supporting image at a time. Each accepted photo is added directly to this application."
+        : "The camera opens inside Crane Credit so you can attach the image directly to this application.";
+    }
+
+    if (cameraModal) {
+      cameraModal.hidden = false;
+      requestAnimationFrame(() => cameraModal.classList.add("active"));
+    }
+
+    await startCameraStreamForField(field);
+  }
+
+  function closeCameraModal() {
+    stopCameraStream();
+    activeCameraField = null;
+    capturedCameraBlob = null;
+
+    if (cameraVideo) {
+      cameraVideo.pause();
+      cameraVideo.srcObject = null;
+      cameraVideo.hidden = false;
+    }
+    if (cameraCanvas) {
+      cameraCanvas.hidden = true;
+    }
+    if (cameraStageMessage) {
+      cameraStageMessage.hidden = true;
+      cameraStageMessage.textContent = "";
+    }
+    if (cameraCaptureButton) {
+      cameraCaptureButton.hidden = false;
+      cameraCaptureButton.disabled = false;
+    }
+    if (cameraRetakeButton) {
+      cameraRetakeButton.hidden = true;
+    }
+    if (cameraUseButton) {
+      cameraUseButton.hidden = true;
+    }
+    if (cameraModal) {
+      cameraModal.classList.remove("active");
+      window.setTimeout(() => {
+        if (!cameraModal.classList.contains("active")) {
+          cameraModal.hidden = true;
+        }
+      }, 220);
+    }
+  }
+
+  function capturePhotoFromCamera() {
+    if (!activeCameraField || !cameraVideo || !cameraCanvas || !cameraVideo.videoWidth || !cameraVideo.videoHeight) {
+      return;
+    }
+
+    const context = cameraCanvas.getContext("2d");
+    if (!context) {
+      showCameraStageMessage("The captured frame could not be processed. Use Upload photo instead.");
+      return;
+    }
+
+    cameraCanvas.width = cameraVideo.videoWidth;
+    cameraCanvas.height = cameraVideo.videoHeight;
+    context.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
+
+    cameraCanvas.toBlob((blob) => {
+      if (!blob) {
+        showCameraStageMessage("The captured frame could not be saved. Use Upload photo instead.");
+        return;
+      }
+
+      capturedCameraBlob = blob;
+      stopCameraStream();
+
+      cameraVideo.hidden = true;
+      cameraCanvas.hidden = false;
+      if (cameraCaptureButton) {
+        cameraCaptureButton.hidden = true;
+      }
+      if (cameraRetakeButton) {
+        cameraRetakeButton.hidden = false;
+      }
+      if (cameraUseButton) {
+        cameraUseButton.hidden = false;
+      }
+    }, "image/jpeg", 0.92);
+  }
+
+  function confirmCapturedPhoto() {
+    if (!activeCameraField || !capturedCameraBlob) {
+      return;
+    }
+
+    const input = getDocumentInput(activeCameraField);
+    if (!input?.name) {
+      closeCameraModal();
+      return;
+    }
+
+    const extensionSafeName = input.name.replace(/[^a-z0-9_]+/gi, "-");
+    const file = new File([capturedCameraBlob], `${extensionSafeName}-${Date.now()}.jpg`, { type: "image/jpeg" });
+    setStoredDocumentFiles(activeCameraField, [file], { append: activeCameraField.dataset.multiple === "true" });
+    closeCameraModal();
   }
 
   function createUniqueOptions(values = []) {
@@ -1398,6 +1709,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  initializeDocumentUploadState();
+
+  documentUploadFields.forEach((field) => {
+    const input = getDocumentInput(field);
+    const openFileButton = field.querySelector("[data-open-file]");
+    const openCameraButton = field.querySelector("[data-open-camera]");
+
+    openFileButton?.addEventListener("click", () => input?.click());
+    openCameraButton?.addEventListener("click", async () => {
+      await openCameraModalForField(field);
+    });
+
+    input?.addEventListener("change", () => {
+      setStoredDocumentFiles(field, Array.from(input.files || []));
+    });
+  });
+
+  cameraModal?.addEventListener("click", (event) => {
+    if (event.target === cameraModal) {
+      closeCameraModal();
+    }
+  });
+
+  document.querySelectorAll("[data-camera-close]").forEach((button) => {
+    button.addEventListener("click", closeCameraModal);
+  });
+  cameraCaptureButton?.addEventListener("click", capturePhotoFromCamera);
+  cameraUseButton?.addEventListener("click", confirmCapturedPhoto);
+  cameraRetakeButton?.addEventListener("click", async () => {
+    if (activeCameraField) {
+      await startCameraStreamForField(activeCameraField);
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && cameraModal?.classList.contains("active")) {
+      closeCameraModal();
+    }
+  });
+
   // Footer menu handlers
   const footerBoxes = document.querySelectorAll(".footer-box");
   if (footerBoxes.length > 0) {
@@ -1652,6 +2002,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.CraneNotify.warning(accessState.message);
       return;
     }
+    if (!validateDocumentUploads()) {
+      return;
+    }
 
     feedback.textContent = "Submitting application...";
     delete feedback.dataset.lockReason;
@@ -1670,20 +2023,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       const { loan } = await window.CraneApi.applyLoan(payload);
       createdLoan = loan;
       clearLoanDraft();
-      const documentInputs = Array.from(loanForm.querySelectorAll('input[type="file"]'));
-      for (const input of documentInputs) {
-        const files = Array.from(input.files || []);
+      for (const field of documentUploadFields) {
+        const input = getDocumentInput(field);
+        const files = getStoredDocumentFiles(field);
         if (!files.length) {
           continue;
         }
         for (const file of files) {
-          feedback.textContent = `Uploading ${input.name.replace(/_/g, " ")}...`;
+          feedback.textContent = `Uploading ${getDocumentFieldLabel(field).toLowerCase()}...`;
           const documentType = input.name === "additional_document" ? "additional_document" : input.name;
           await window.CraneApi.uploadLoanDocument(loan.id, documentType, file);
         }
       }
 
       loanForm.reset();
+      resetDocumentUploadState();
       updateLoanApplicationRules();
       feedback.textContent = `Application ${loan.application_code} submitted successfully.`;
       window.CraneNotify.success("Loan request submitted.");

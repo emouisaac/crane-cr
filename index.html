@@ -686,32 +686,68 @@
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                   <circle cx="12" cy="13" r="4"></circle>
                 </svg>
-                <span>📱 Tap any field to use your device camera for photo capture</span>
+                <span>Open the camera inside Crane Credit or upload saved photos from your device. Mobile browsers will stay inside the project instead of jumping to the phone camera app.</span>
               </div>
               <div class="document-grid">
-                <div class="form-group">
+                <div class="form-group document-upload-card" data-document-field="id_front" data-camera-facing="environment" data-required="true">
                   <label>NIN / passport front</label>
-                  <input type="file" name="id_front" accept="image/*" capture="environment" required>
+                  <p class="document-upload-copy">Capture the front side in-app or choose a clear saved image.</p>
+                  <div class="document-upload-actions">
+                    <button type="button" class="button button-secondary" data-open-camera>Open camera</button>
+                    <button type="button" class="button button-secondary" data-open-file>Upload photo</button>
+                  </div>
+                  <input id="document-id-front" class="document-native-input" type="file" name="id_front" accept="image/*" tabindex="-1">
+                  <div class="document-upload-status" data-upload-status>No file selected yet.</div>
                 </div>
-                <div class="form-group">
+                <div class="form-group document-upload-card" data-document-field="id_back" data-camera-facing="environment" data-required="true">
                   <label>NIN / passport back</label>
-                  <input type="file" name="id_back" accept="image/*" capture="environment" required>
+                  <p class="document-upload-copy">Capture the back side in-app or choose a clear saved image.</p>
+                  <div class="document-upload-actions">
+                    <button type="button" class="button button-secondary" data-open-camera>Open camera</button>
+                    <button type="button" class="button button-secondary" data-open-file>Upload photo</button>
+                  </div>
+                  <input id="document-id-back" class="document-native-input" type="file" name="id_back" accept="image/*" tabindex="-1">
+                  <div class="document-upload-status" data-upload-status>No file selected yet.</div>
                 </div>
-                <div class="form-group" data-document-group="income-proof">
+                <div class="form-group document-upload-card" data-document-group="income-proof" data-document-field="income_proof" data-camera-facing="environment" data-required="true">
                   <label id="income-proof-label">Income proof</label>
-                  <input type="file" name="income_proof" accept="image/*" capture="environment" required>
+                  <p class="document-upload-copy">Upload a payslip, business proof, or another clear income document.</p>
+                  <div class="document-upload-actions">
+                    <button type="button" class="button button-secondary" data-open-camera>Open camera</button>
+                    <button type="button" class="button button-secondary" data-open-file>Upload photo</button>
+                  </div>
+                  <input id="document-income-proof" class="document-native-input" type="file" name="income_proof" accept="image/*" tabindex="-1">
+                  <div class="document-upload-status" data-upload-status>No file selected yet.</div>
                 </div>
-                <div class="form-group" data-document-group="bank-statement">
+                <div class="form-group document-upload-card" data-document-group="bank-statement" data-document-field="bank_statement" data-camera-facing="environment">
                   <label id="bank-statement-label">Bank statement</label>
-                  <input type="file" name="bank_statement" accept="image/*" capture="environment">
+                  <p class="document-upload-copy">Optional. Add a recent statement page if it supports your application.</p>
+                  <div class="document-upload-actions">
+                    <button type="button" class="button button-secondary" data-open-camera>Open camera</button>
+                    <button type="button" class="button button-secondary" data-open-file>Upload photo</button>
+                  </div>
+                  <input id="document-bank-statement" class="document-native-input" type="file" name="bank_statement" accept="image/*" tabindex="-1">
+                  <div class="document-upload-status" data-upload-status>No file selected yet.</div>
                 </div>
-                <div class="form-group">
+                <div class="form-group document-upload-card" data-document-field="selfie_photo" data-camera-facing="user" data-required="true">
                   <label>Live selfie / verification photo</label>
-                  <input type="file" name="selfie_photo" accept="image/*" capture="user" required>
+                  <p class="document-upload-copy">Use the in-app camera for a live verification selfie or choose a recent saved photo.</p>
+                  <div class="document-upload-actions">
+                    <button type="button" class="button button-secondary" data-open-camera>Open camera</button>
+                    <button type="button" class="button button-secondary" data-open-file>Upload photo</button>
+                  </div>
+                  <input id="document-selfie-photo" class="document-native-input" type="file" name="selfie_photo" accept="image/*" tabindex="-1">
+                  <div class="document-upload-status" data-upload-status>No file selected yet.</div>
                 </div>
-                <div class="form-group">
+                <div class="form-group document-upload-card" data-document-field="additional_document" data-camera-facing="environment" data-multiple="true">
                   <label>Additional documents</label>
-                  <input type="file" name="additional_document" accept="image/*" capture="environment" multiple>
+                  <p class="document-upload-copy">Add any supporting pages. You can capture more than one image here.</p>
+                  <div class="document-upload-actions">
+                    <button type="button" class="button button-secondary" data-open-camera>Open camera</button>
+                    <button type="button" class="button button-secondary" data-open-file>Upload photo</button>
+                  </div>
+                  <input id="document-additional" class="document-native-input" type="file" name="additional_document" accept="image/*" multiple tabindex="-1">
+                  <div class="document-upload-status" data-upload-status>No file selected yet.</div>
                 </div>
               </div>
 
@@ -1401,6 +1437,29 @@
     <div class="chat-input-area">
       <input type="text" class="chat-input" placeholder="Type your message...">
       <button type="button" class="chat-send-btn">Send</button>
+    </div>
+  </div>
+
+  <div class="camera-modal-overlay" id="camera-capture-modal" hidden>
+    <div class="camera-modal-card" role="dialog" aria-modal="true" aria-labelledby="camera-capture-title">
+      <div class="camera-modal-header">
+        <div>
+          <h3 id="camera-capture-title">Capture document photo</h3>
+          <p id="camera-capture-subtitle">The camera opens inside Crane Credit so you can attach the image directly to this application.</p>
+        </div>
+        <button type="button" class="camera-modal-close" aria-label="Close camera" data-camera-close>&times;</button>
+      </div>
+      <div class="camera-stage">
+        <video id="camera-capture-video" autoplay playsinline muted></video>
+        <canvas id="camera-capture-canvas" hidden></canvas>
+        <div class="camera-stage-message" id="camera-stage-message" hidden></div>
+      </div>
+      <div class="camera-modal-actions">
+        <button type="button" class="button button-secondary" data-camera-close>Cancel</button>
+        <button type="button" class="button button-secondary" id="camera-retake-btn" hidden>Retake</button>
+        <button type="button" class="button button-primary" id="camera-capture-btn">Capture photo</button>
+        <button type="button" class="button button-primary" id="camera-use-btn" hidden>Use this photo</button>
+      </div>
     </div>
   </div>
 
