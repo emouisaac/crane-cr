@@ -51,6 +51,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const offerAmountValue = document.querySelector(".offer-amount");
   const offerInstallmentValue = document.querySelector("[data-offer-installment]");
   const offerRateCaption = document.querySelector("[data-offer-rate-caption]");
+  const activeViewStorageKey = "crane.activeView";
+  const loanDraftStorageKey = "crane.loanRequestDraft";
   let dashboardData = null;
   let dashboardRefreshTimer = null;
   let currentLoanFilter = "all";
@@ -284,6 +286,120 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     sections.forEach((section, sectionIndex) => section.classList.toggle("active", sectionIndex === index));
     navLinks.forEach((link) => link.classList.toggle("active", link.dataset.view === viewName));
+    writeSessionValue(activeViewStorageKey, viewName);
+  }
+
+  function readSessionValue(key) {
+    try {
+      return window.sessionStorage.getItem(key);
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function writeSessionValue(key, value) {
+    try {
+      window.sessionStorage.setItem(key, value);
+    } catch (_error) {
+      // Ignore storage write failures and keep the current in-memory state.
+    }
+  }
+
+  function removeSessionValue(key) {
+    try {
+      window.sessionStorage.removeItem(key);
+    } catch (_error) {
+      // Ignore storage removal failures.
+    }
+  }
+
+  function getInitialView() {
+    const storedView = readSessionValue(activeViewStorageKey);
+    if (!storedView || !viewOrder.includes(storedView)) {
+      return "overview";
+    }
+    if (storedView !== "overview" && !isAuthenticated()) {
+      return "overview";
+    }
+    return storedView;
+  }
+
+  function serializeLoanDraft() {
+    if (!loanForm) {
+      return null;
+    }
+
+    return Array.from(loanForm.elements).reduce((draft, field) => {
+      if (!field?.name || field.type === "file") {
+        return draft;
+      }
+      draft[field.name] = field.value;
+      return draft;
+    }, {});
+  }
+
+  function persistLoanDraft() {
+    const draft = serializeLoanDraft();
+    if (!draft) {
+      return;
+    }
+    writeSessionValue(loanDraftStorageKey, JSON.stringify(draft));
+  }
+
+  function clearLoanDraft() {
+    removeSessionValue(loanDraftStorageKey);
+  }
+
+  function restoreLoanDraft() {
+    if (!loanForm) {
+      return;
+    }
+
+    const rawDraft = readSessionValue(loanDraftStorageKey);
+    if (!rawDraft) {
+      return;
+    }
+
+    try {
+      const draft = JSON.parse(rawDraft);
+      if (!draft || typeof draft !== "object") {
+        return;
+      }
+
+      const localityFieldNames = new Set(["district", "subcounty", "parish", "village"]);
+      Object.entries(draft).forEach(([name, value]) => {
+        if (localityFieldNames.has(name)) {
+          return;
+        }
+        const field = loanForm.elements[name];
+        if (field && field.type !== "file") {
+          field.value = value ?? "";
+        }
+      });
+
+      if (loanForm.elements.district) {
+        loanForm.elements.district.value = draft.district || "";
+      }
+      populateLocalitySuggestions({ resetChildren: false });
+
+      if (loanForm.elements.subcounty) {
+        loanForm.elements.subcounty.value = draft.subcounty || "";
+      }
+      populateLocalitySuggestions({ resetChildren: false });
+
+      if (loanForm.elements.parish) {
+        loanForm.elements.parish.value = draft.parish || "";
+      }
+      populateLocalitySuggestions({ resetChildren: false });
+
+      if (loanForm.elements.village) {
+        loanForm.elements.village.value = draft.village || "";
+      }
+
+      updateLoanApplicationRules();
+    } catch (_error) {
+      clearLoanDraft();
+    }
   }
 
   function openModal(showRegister = false) {
@@ -1547,11 +1663,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       payload[key] = value;
     }
+    payload.phone = window.CraneForms.normalizePhone(payload.phone, "+256");
 
     let createdLoan = null;
     try {
       const { loan } = await window.CraneApi.applyLoan(payload);
       createdLoan = loan;
+      clearLoanDraft();
       const documentInputs = Array.from(loanForm.querySelectorAll('input[type="file"]'));
       for (const input of documentInputs) {
         const files = Array.from(input.files || []);
@@ -1573,6 +1691,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await loadDashboard();
     } catch (error) {
       if (createdLoan) {
+        clearLoanDraft();
         feedback.textContent = `Application ${createdLoan.application_code} was submitted, but one or more document uploads failed.`;
         window.CraneNotify.warning("The loan request was created, but some documents still need attention.");
         setActiveView("loans");
@@ -1601,9 +1720,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   loanForm?.elements?.applicantCategory?.addEventListener("change", updateLoanApplicationRules);
   loanForm?.elements?.amount?.addEventListener("input", updateLoanApplicationRules);
+  loanForm?.addEventListener("input", persistLoanDraft);
+  loanForm?.addEventListener("change", persistLoanDraft);
   const handleDistrictSelection = () => {
     populateLocalitySuggestions({ resetChildren: true });
     updateLoanApplicationRules();
+    persistLoanDraft();
   };
   loanForm?.elements?.district?.addEventListener("change", handleDistrictSelection);
   loanForm?.elements?.district?.addEventListener("input", handleDistrictSelection);
@@ -1615,15 +1737,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       loanForm.elements.village.value = "";
     }
     populateLocalitySuggestions();
+    persistLoanDraft();
   });
   loanForm?.elements?.parish?.addEventListener("change", () => {
     if (loanForm?.elements?.village) {
       loanForm.elements.village.value = "";
     }
     populateLocalitySuggestions();
+    persistLoanDraft();
   });
   prioritizeDistrictOptions();
   renderPromoOffer();
+  restoreLoanDraft();
   updateLoanApplicationRules();
 
   // Play intro animation first, then load dashboard
@@ -1631,5 +1756,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   await window.CraneAuth.bootstrap();
   await loadDashboard();
   window.CraneRealtime.connect();
-  setActiveView("overview");
+  setActiveView(getInitialView());
 });
