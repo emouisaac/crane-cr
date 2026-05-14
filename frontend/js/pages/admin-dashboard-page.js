@@ -338,8 +338,68 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 60);
   }
 
+  function openDocumentsWorkspace() {
+    if (!selectedLoanDetail?.loan) {
+      window.CraneNotify.info("Select an application first.");
+      return;
+    }
+
+    setActiveView("documents");
+    const documentsHost = document.getElementById("detail-documents");
+    window.setTimeout(() => {
+      documentsHost?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+
+    if (!(selectedLoanDetail.documents || []).length) {
+      window.CraneNotify.info("This borrower has not uploaded documents yet.");
+    }
+  }
+
   function createEmptyState(message) {
     return `<div class="panel-empty-state">${escapeHtml(message)}</div>`;
+  }
+
+  function addMonths(dateValue, months) {
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+    date.setMonth(date.getMonth() + Number(months || 0));
+    return date;
+  }
+
+  function getLoanDueDateLabel(loan) {
+    if (!["approved", "disbursed"].includes(loan?.status)) {
+      return "";
+    }
+
+    const baseDate = addMonths(loan.updated_at || loan.submitted_at, loan.term_months || 0);
+    if (!baseDate) {
+      return "";
+    }
+
+    return baseDate.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  }
+
+  function setSoftDisabled(button, shouldDisable, reason = "") {
+    if (!button) {
+      return;
+    }
+
+    button.disabled = false;
+    button.classList.toggle("is-disabled", shouldDisable);
+    button.setAttribute("aria-disabled", shouldDisable ? "true" : "false");
+    if (shouldDisable) {
+      button.dataset.disabledReason = reason;
+      button.title = reason;
+    } else {
+      delete button.dataset.disabledReason;
+      button.title = "";
+    }
   }
 
   function renderNotificationFeed(host, notifications, emptyMessage, limit = notifications.length) {
@@ -368,6 +428,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function buildApplicationItem(loan, isActive = false) {
+    const dueDateLabel = getLoanDueDateLabel(loan);
     return `
       <button type="button" class="role-list-item is-interactive ${isActive ? "is-active" : ""}" data-loan-id="${loan.id}">
         <div class="role-item-head">
@@ -382,6 +443,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <span>${escapeHtml(`${loan.term_months} months`)}</span>
           <span>${escapeHtml(formatStatus(loan.purpose || "general"))}</span>
         </div>
+        ${dueDateLabel ? `<div class="role-item-actions"><span class="loan-live-pill">LIVE • Due ${escapeHtml(dueDateLabel)}</span></div>` : ""}
       </button>
     `;
   }
@@ -546,8 +608,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.querySelectorAll("[data-open-request-documents]").forEach((button) => {
       button.hidden = !canRequestDocuments;
-      button.disabled = !canRequestDocuments || !hasSelectedLoan || workflowLock.locked;
-      button.title = !hasSelectedLoan ? "Select an application first." : workflowLock.reason;
+      setSoftDisabled(button, !canRequestDocuments || !hasSelectedLoan || workflowLock.locked, !hasSelectedLoan ? "Select an application first." : workflowLock.reason);
+    });
+
+    document.querySelectorAll("[data-open-documents]").forEach((button) => {
+      setSoftDisabled(button, !hasSelectedLoan, !hasSelectedLoan ? "Select an application first." : "");
     });
 
     document.querySelectorAll("#detail-documents [data-document-id]").forEach((button) => {
@@ -943,9 +1008,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.getElementById("application-detail").addEventListener("click", async (event) => {
+    const documentsButton = event.target.closest("[data-open-documents]");
+    if (documentsButton) {
+      const disabledReason = documentsButton.dataset.disabledReason;
+      if (disabledReason) {
+        window.CraneNotify.info(disabledReason);
+        return;
+      }
+      openDocumentsWorkspace();
+      return;
+    }
+
     const requestDocumentsButton = event.target.closest("[data-open-request-documents]");
     if (requestDocumentsButton) {
-      if (requestDocumentsButton.disabled) {
+      const disabledReason = requestDocumentsButton.dataset.disabledReason;
+      if (disabledReason) {
+        window.CraneNotify.info(disabledReason);
         return;
       }
       openRequestDocumentsWorkspace();

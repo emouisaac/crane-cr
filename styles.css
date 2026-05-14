@@ -2540,6 +2540,30 @@ body.super-admin-dashboard-page {
   padding: 0.7rem 1rem;
   font-size: 0.8rem;
 }
+.loan-live-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(13, 139, 99, 0.12);
+  border: 1px solid rgba(13, 139, 99, 0.2);
+  color: #0b6e4f;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.button:disabled,
+.role-action-button:disabled,
+.button.is-disabled {
+  opacity: 0.48;
+  filter: saturate(0.7);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.button.is-disabled {
+  pointer-events: auto;
+}
 .role-action-danger {
   background: rgba(239, 68, 68, 0.14);
   color: #b42323;
@@ -2572,6 +2596,17 @@ body.super-admin-dashboard-page {
   font: inherit;
   outline: none;
   transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.role-form-stack input:disabled,
+.role-form-stack select:disabled,
+.role-form-stack textarea:disabled,
+.loan-request-form input:disabled,
+.loan-request-form select:disabled,
+.loan-request-form textarea:disabled {
+  opacity: 0.52;
+  background: rgba(226, 233, 229, 0.78);
+  color: rgba(18, 37, 27, 0.6);
+  cursor: not-allowed;
 }
 .role-form-stack input:focus,
 .role-form-stack select:focus,

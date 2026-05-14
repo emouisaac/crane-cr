@@ -111,6 +111,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     return `UGX ${Number(value || 0).toLocaleString("en-UG", { maximumFractionDigits: 0 })}`;
   }
 
+  function formatOfferAmountLabel(value) {
+    if (Number(value) >= promoOffer.maxAmount) {
+      return `${formatOfferCurrency(promoOffer.maxAmount)}+`;
+    }
+    return formatOfferCurrency(value);
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replace(/&/g, "&amp;")
@@ -503,7 +510,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { minAmount, maxAmount, minRatePercent, maxRatePercent, termMonths } = promoOffer;
     const currentAmount = clamp(Number(offerSlider?.value || maxAmount), minAmount, maxAmount);
     const ratio = (currentAmount - minAmount) / Math.max(maxAmount - minAmount, 1);
-    const ratePercent = Math.round((minRatePercent + ratio * (maxRatePercent - minRatePercent)) * 10) / 10;
+    const ratePercent = Math.round((maxRatePercent - ratio * (maxRatePercent - minRatePercent)) * 10) / 10;
     return {
       amount: currentAmount,
       ratePercent,
@@ -518,7 +525,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const monthlyInstallment = Math.round(monthlyPrincipal + monthlyInterest);
 
     if (offerAmountValue) {
-      offerAmountValue.textContent = formatOfferCurrency(amount);
+      offerAmountValue.textContent = formatOfferAmountLabel(amount);
     }
     if (offerInstallmentValue) {
       offerInstallmentValue.textContent = formatOfferCurrency(monthlyInstallment);

@@ -407,12 +407,24 @@ async function updateLoanStatus({ actor, loanId, nextStatus, notes, req }) {
       [loanId, nextStatus, nextReviewNotes, actor.role === "admin" ? actor.id : loan.assigned_admin_id]
     );
     const updated = updatedResult.rows[0];
+    let verifiedAccount = null;
 
     await client.query(
       `INSERT INTO loan_status_history (loan_application_id, changed_by_account_id, from_status, to_status, notes)
        VALUES ($1, $2, $3, $4, $5)`,
       [loanId, actor.id, loan.status, nextStatus, notes || null]
     );
+
+    if (nextStatus === "approved") {
+      const verifiedAccountResult = await client.query(
+        `UPDATE accounts
+         SET verification_status = 'verified', updated_at = NOW()
+         WHERE id = $1
+         RETURNING id, role, admin_role, full_name, email, phone, username, national_id, status, verification_status, permissions, profile, last_login_at, created_at, updated_at`,
+        [loan.user_id]
+      );
+      verifiedAccount = verifiedAccountResult.rows[0] || null;
+    }
 
     await createNotification({
       client,
@@ -427,6 +439,12 @@ async function updateLoanStatus({ actor, loanId, nextStatus, notes, req }) {
     emitToAccount(loan.user_id, "loan:updated", updated);
     emitToRole("super_admin", "loan:updated", updated);
     emitToRole("admin", "loan:updated", updated);
+
+    if (verifiedAccount) {
+      emitToAccount(loan.user_id, "user:updated", verifiedAccount);
+      emitToRole("admin", "user:updated", verifiedAccount);
+      emitToRole("super_admin", "user:updated", verifiedAccount);
+    }
 
     await logAuditEvent({
       client,
