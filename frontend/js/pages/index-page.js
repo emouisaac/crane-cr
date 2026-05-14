@@ -59,8 +59,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const earlyTotalPayoff = document.querySelector("[data-early-total-payoff]");
   const earlyRepayButton = document.querySelector("[data-early-repay-button]");
   const offerAmountValue = document.querySelector(".offer-amount");
+  const offerSlider = document.querySelector("[data-offer-slider]");
   const offerInstallmentValue = document.querySelector("[data-offer-installment]");
   const offerRateCaption = document.querySelector("[data-offer-rate-caption]");
+  const offerRateLiveValue = document.querySelector("[data-offer-rate-live]");
   const activeViewStorageKey = "crane.activeView";
   const loanDraftStorageKey = "crane.loanRequestDraft";
   const documentUploadState = new Map();
@@ -80,8 +82,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const defaultLoanHelpText = "Status will be updated once admin review begins.";
   const defaultLoanInterestRate = 17;
   const promoOffer = {
-    amount: 5000000,
-    ratePercent: 9,
+    minAmount: 100000,
+    maxAmount: 5000000,
+    minRatePercent: 9,
+    maxRatePercent: 17,
     termMonths: 12
   };
   const popularDistricts = [
@@ -491,8 +495,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function getPromoOfferState() {
+    const { minAmount, maxAmount, minRatePercent, maxRatePercent, termMonths } = promoOffer;
+    const currentAmount = clamp(Number(offerSlider?.value || maxAmount), minAmount, maxAmount);
+    const ratio = (currentAmount - minAmount) / Math.max(maxAmount - minAmount, 1);
+    const ratePercent = Math.round((minRatePercent + ratio * (maxRatePercent - minRatePercent)) * 10) / 10;
+    return {
+      amount: currentAmount,
+      ratePercent,
+      termMonths
+    };
+  }
+
   function renderPromoOffer() {
-    const { amount, ratePercent, termMonths } = promoOffer;
+    const { amount, ratePercent, termMonths } = getPromoOfferState();
     const monthlyPrincipal = amount / Math.max(termMonths, 1);
     const monthlyInterest = (amount * ratePercent) / 100;
     const monthlyInstallment = Math.round(monthlyPrincipal + monthlyInterest);
@@ -505,6 +525,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     if (offerRateCaption) {
       offerRateCaption.textContent = `${ratePercent}% monthly for ${termMonths} months`;
+    }
+    if (offerRateLiveValue) {
+      offerRateLiveValue.textContent = `${ratePercent}%`;
     }
   }
 
@@ -1651,8 +1674,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       openModal(false);
       return;
     }
+    const offerState = getPromoOfferState();
+    if (loanForm?.elements?.amount) {
+      loanForm.elements.amount.value = String(Math.round(offerState.amount));
+    }
+    if (loanForm?.elements?.termMonths) {
+      loanForm.elements.termMonths.value = String(offerState.termMonths);
+    }
+    updateLoanApplicationRules();
+    persistLoanDraft();
     setActiveView("get-loan");
   });
+  offerSlider?.addEventListener("input", renderPromoOffer);
   document.querySelector(".refresh-btn")?.addEventListener("click", () => loadDashboard(true));
   document.querySelectorAll('[data-loans-action="view-all"]').forEach((button) => button.addEventListener("click", () => {
     if (!isAuthenticated()) {
@@ -2031,8 +2064,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         for (const file of files) {
           feedback.textContent = `Uploading ${getDocumentFieldLabel(field).toLowerCase()}...`;
-          const documentType = input.name === "additional_document" ? "additional_document" : input.name;
-          await window.CraneApi.uploadLoanDocument(loan.id, documentType, file);
+          try {
+            const documentType = input.name === "additional_document" ? "additional_document" : input.name;
+            await window.CraneApi.uploadLoanDocument(loan.id, documentType, file);
+          } catch (uploadError) {
+            throw new Error(`${getDocumentFieldLabel(field)}: ${uploadError.message || "Upload failed."}`);
+          }
         }
       }
 
@@ -2044,10 +2081,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       setActiveView("loans");
       await loadDashboard();
     } catch (error) {
+      if (error.status === 401) {
+        feedback.textContent = "Your borrower session expired. Please sign in again to continue.";
+        window.CraneNotify.warning("Please sign in again to continue your loan application.");
+        openModal(false);
+        return;
+      }
       if (createdLoan) {
         clearLoanDraft();
-        feedback.textContent = `Application ${createdLoan.application_code} was submitted, but one or more document uploads failed.`;
-        window.CraneNotify.warning("The loan request was created, but some documents still need attention.");
+        feedback.textContent = `Application ${createdLoan.application_code} was submitted, but ${error.message || "one or more document uploads failed"}.`;
+        window.CraneNotify.warning(error.message || "The loan request was created, but some documents still need attention.");
         setActiveView("loans");
         await loadDashboard();
         return;

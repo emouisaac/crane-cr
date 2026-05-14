@@ -5,7 +5,7 @@ const { getAllLoans, getLoanById } = require("../models/loan-model");
 const { getDocumentsForLoan } = require("../models/document-model");
 const { listUsers } = require("../models/account-model");
 const { getNotificationsForAccount } = require("../models/notification-model");
-const { updateLoanStatus } = require("../services/loan-service");
+const { AWAITING_DOCUMENTS_NOTE, updateLoanStatus } = require("../services/loan-service");
 const { createNotification } = require("../services/notification-service");
 const { revokeAllSessionsForAccount } = require("../services/auth-service");
 const { emitToAccount, emitToRole } = require("../services/socket-bus");
@@ -205,7 +205,7 @@ async function requestDocuments(req, res) {
     actor: req.auth,
     loanId: loan.id,
     nextStatus: followUpStatus,
-    notes: "Awaiting additional borrower documents.",
+    notes: AWAITING_DOCUMENTS_NOTE,
     req
   });
 

@@ -11,6 +11,7 @@ const { CAPABILITIES, hasAdminCapability } = require("../utils/admin-roles");
 const PROCESSING_LOAN_STATUSES = new Set(["submitted", "under_review", "verification"]);
 const EXISTING_LOAN_STATUSES = new Set(["approved", "disbursed"]);
 const REAPPLICATION_COOLDOWN_DAYS = 7;
+const AWAITING_DOCUMENTS_NOTE = "Awaiting additional borrower documents.";
 const eligibilityDateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "long",
   timeZone: "UTC"
@@ -176,6 +177,47 @@ async function detectDuplicateRisk({ userId, nationalId, phone, email, req }) {
   };
 }
 
+async function assertUniqueBorrowerIdentityData(client, { userId, nationalId, phone, email }) {
+  if (nationalId) {
+    const nationalIdMatch = await client.query(
+      `SELECT full_name
+       FROM accounts
+       WHERE national_id = $1 AND id <> $2
+       LIMIT 1`,
+      [nationalId, userId]
+    );
+    if (nationalIdMatch.rowCount > 0) {
+      throw new AppError(409, `National ID / passport is already linked to ${nationalIdMatch.rows[0].full_name || "another account"}.`);
+    }
+  }
+
+  if (email) {
+    const emailMatch = await client.query(
+      `SELECT full_name
+       FROM accounts
+       WHERE email = $1 AND id <> $2
+       LIMIT 1`,
+      [email, userId]
+    );
+    if (emailMatch.rowCount > 0) {
+      throw new AppError(409, `Email address is already linked to ${emailMatch.rows[0].full_name || "another account"}.`);
+    }
+  }
+
+  if (phone) {
+    const phoneMatch = await client.query(
+      `SELECT full_name
+       FROM accounts
+       WHERE phone = $1 AND id <> $2
+       LIMIT 1`,
+      [phone, userId]
+    );
+    if (phoneMatch.rowCount > 0) {
+      throw new AppError(409, `Phone number is already linked to ${phoneMatch.rows[0].full_name || "another account"}.`);
+    }
+  }
+}
+
 async function getDefaultInterestRate(client) {
   const result = await client.query(
     `SELECT value
@@ -208,6 +250,7 @@ async function submitLoanApplication({ user, body, req }) {
   try {
     const submissionResult = await withTransaction(async (client) => {
       await assertLoanApplicationAllowed(client, user.id);
+      await assertUniqueBorrowerIdentityData(client, { userId: user.id, nationalId, phone, email });
       const interestRate = await getDefaultInterestRate(client);
 
       await client.query(
@@ -351,13 +394,17 @@ async function updateLoanStatus({ actor, loanId, nextStatus, notes, req }) {
       throw new AppError(404, "Loan application not found.");
     }
 
+    const normalizedNotes = typeof notes === "string" ? notes.trim() : "";
+    const shouldClearReviewNotes = ["approved", "rejected", "closed"].includes(nextStatus);
+    const nextReviewNotes = shouldClearReviewNotes ? null : (normalizedNotes || loan.review_notes || null);
+
     const updatedResult = await client.query(
       `UPDATE loan_applications
-       SET status = $2, review_notes = COALESCE($3, review_notes), assigned_admin_id = $4,
+       SET status = $2, review_notes = $3, assigned_admin_id = $4,
            updated_at = NOW(), closed_at = CASE WHEN $2 IN ('rejected', 'closed') THEN NOW() ELSE closed_at END
        WHERE id = $1
        RETURNING *`,
-      [loanId, nextStatus, notes || null, actor.role === "admin" ? actor.id : loan.assigned_admin_id]
+      [loanId, nextStatus, nextReviewNotes, actor.role === "admin" ? actor.id : loan.assigned_admin_id]
     );
     const updated = updatedResult.rows[0];
 
@@ -397,6 +444,7 @@ async function updateLoanStatus({ actor, loanId, nextStatus, notes, req }) {
 }
 
 module.exports = {
+  AWAITING_DOCUMENTS_NOTE,
   submitLoanApplication,
   updateLoanStatus
 };

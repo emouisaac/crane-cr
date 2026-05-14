@@ -184,15 +184,30 @@
                       <span class="pulse-badge">LIVE</span>
                     </div>
                     <div class="offer-amount">UGX 5,000,000</div>
+                    <div class="offer-slider-wrap">
+                      <input
+                        type="range"
+                        class="offer-slider"
+                        data-offer-slider
+                        min="100000"
+                        max="5000000"
+                        step="10000"
+                        value="5000000"
+                        aria-label="Adjust offer amount">
+                      <div class="offer-slider-scale">
+                        <span>UGX 100,000</span>
+                        <span>UGX 5,000,000</span>
+                      </div>
+                    </div>
                     <h3 class="offer-title">Growth Boost</h3>
                     <div class="offer-rate-stack">
-                      <span class="offer-rate-old">17%</span>
-                      <span class="offer-rate-new">9%</span>
+                      <span class="offer-rate-old">Standard 17%</span>
+                      <span class="offer-rate-new" data-offer-rate-live>17%</span>
                     </div>
                     <div class="offer-details">
                       <div class="detail-row">
                         <span class="detail-label">Rate</span>
-                        <span class="detail-value" data-offer-rate-caption>9% monthly for 12 months</span>
+                        <span class="detail-value" data-offer-rate-caption>17% monthly for 12 months</span>
                       </div>
                       <div class="detail-row">
                         <span class="detail-label">Installment</span>

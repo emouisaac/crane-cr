@@ -526,6 +526,25 @@ select {
   letter-spacing: -0.04em;
   animation: bounce-text 0.6s ease-out 0.3s backwards;
 }
+.offer-slider-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0 0 0.7rem;
+}
+.offer-slider {
+  width: 100%;
+  margin: 0;
+  accent-color: #0d8b63;
+  cursor: pointer;
+}
+.offer-slider-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.7rem;
+  color: #587265;
+}
 .offer-rate-stack {
   display: flex;
   align-items: center;

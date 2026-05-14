@@ -13,12 +13,19 @@ function ensureDir(dirPath) {
 }
 
 async function calculateSharpness(buffer) {
-  const { data, info } = await sharp(buffer)
-    .rotate()
-    .resize({ width: 320, withoutEnlargement: true })
-    .grayscale()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
+  let processed;
+  try {
+    processed = await sharp(buffer)
+      .rotate()
+      .resize({ width: 320, withoutEnlargement: true })
+      .grayscale()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+  } catch (_error) {
+    throw new AppError(400, "This photo format could not be processed. Please upload a clear JPG, PNG, WEBP, or a supported camera image.");
+  }
+
+  const { data, info } = processed;
 
   if (!info.width || !info.height) {
     return 0;
@@ -49,11 +56,16 @@ async function processAndStoreDocument({ file, userId, loanApplicationId, docume
     throw new AppError(400, "Image is too blurry. Please retake the photo in better lighting.");
   }
 
-  const processedBuffer = await sharp(file.buffer)
-    .rotate()
-    .resize({ width: 1800, withoutEnlargement: true })
-    .jpeg({ quality: 84, mozjpeg: true })
-    .toBuffer();
+  let processedBuffer;
+  try {
+    processedBuffer = await sharp(file.buffer)
+      .rotate()
+      .resize({ width: 1800, withoutEnlargement: true })
+      .jpeg({ quality: 84, mozjpeg: true })
+      .toBuffer();
+  } catch (_error) {
+    throw new AppError(400, "This photo format could not be processed. Please upload a clear JPG, PNG, WEBP, or a supported camera image.");
+  }
 
   const sha256Hash = crypto.createHash("sha256").update(processedBuffer).digest("hex");
   const existingHash = await query("SELECT id, user_id FROM documents WHERE sha256_hash = $1", [sha256Hash]);

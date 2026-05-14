@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let refreshTimer = null;
   let selectedLoanId = null;
   let selectedLoanDetail = null;
+  const FINALIZED_LOAN_STATUSES = new Set(["approved", "rejected", "closed", "disbursed"]);
 
   const ADMIN_ROLE_OPTIONS = [
     { value: "manager", label: "Manager" },
@@ -81,6 +82,89 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function getAdminRoleDescription(adminRole) {
     return ADMIN_ROLE_DESCRIPTIONS[adminRole] || ADMIN_ROLE_DESCRIPTIONS.manager;
+  }
+
+  function getSuperWorkflowLock(loan = selectedLoanDetail?.loan) {
+    if (!loan) {
+      return {
+        finalLocked: true,
+        finalReason: "Select an application first.",
+        approveLocked: true,
+        approveReason: "Select an application first.",
+        requestLocked: true,
+        requestReason: "Select an application first."
+      };
+    }
+
+    if (FINALIZED_LOAN_STATUSES.has(loan.status)) {
+      const reason = `This application is already ${formatStatus(loan.status)}.`;
+      return {
+        finalLocked: true,
+        finalReason: reason,
+        approveLocked: true,
+        approveReason: reason,
+        requestLocked: true,
+        requestReason: reason
+      };
+    }
+
+    if (loan.waiting_for_documents) {
+      return {
+        finalLocked: false,
+        finalReason: "",
+        approveLocked: true,
+        approveReason: "Approval stays disabled until the borrower uploads the requested documents.",
+        requestLocked: true,
+        requestReason: "A document request is already pending for this borrower."
+      };
+    }
+
+    return {
+      finalLocked: false,
+      finalReason: "",
+      approveLocked: false,
+      approveReason: "",
+      requestLocked: false,
+      requestReason: ""
+    };
+  }
+
+  function updateActionAccess() {
+    const hasSelectedLoan = Boolean(selectedLoanDetail?.loan);
+    const workflowLock = getSuperWorkflowLock();
+
+    document.querySelectorAll("[data-super-status-action]").forEach((button) => {
+      const isApprove = button.dataset.superStatusAction === "approved";
+      const isRejected = button.dataset.superStatusAction === "rejected";
+      const isLocked = !hasSelectedLoan
+        || (isApprove ? workflowLock.approveLocked : workflowLock.finalLocked)
+        || (isRejected && workflowLock.finalLocked);
+
+      button.disabled = isLocked;
+      button.title = !hasSelectedLoan
+        ? "Select an application first."
+        : (isApprove ? workflowLock.approveReason : workflowLock.finalReason);
+    });
+
+    document.querySelectorAll("[data-super-open-request-documents]").forEach((button) => {
+      button.disabled = !hasSelectedLoan || workflowLock.requestLocked;
+      button.title = !hasSelectedLoan ? "Select an application first." : workflowLock.requestReason;
+    });
+
+    document.querySelectorAll("#super-detail-documents [data-super-document-id]").forEach((button) => {
+      button.disabled = !hasSelectedLoan || workflowLock.finalLocked;
+    });
+
+    ["super-request-documents-form", "super-note-form"].forEach((formId) => {
+      const form = document.getElementById(formId);
+      if (!form) {
+        return;
+      }
+      const disableForm = !hasSelectedLoan || (formId === "super-request-documents-form" ? workflowLock.requestLocked : workflowLock.finalLocked);
+      Array.from(form.elements).forEach((element) => {
+        element.disabled = disableForm;
+      });
+    });
   }
 
   function setText(selector, value) {
@@ -379,6 +463,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
       }
     });
+    updateActionAccess();
   }
 
   function renderSelectedLoanContext() {
@@ -527,16 +612,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           .join("")
       : createEmptyState("No super admin notes have been added yet.");
 
-    ["super-request-documents-form", "super-note-form"].forEach((formId) => {
-      const form = document.getElementById(formId);
-      if (form) {
-        Array.from(form.elements).forEach((element) => {
-          element.disabled = false;
-        });
-      }
-    });
-
     renderSelectedLoanContext();
+    updateActionAccess();
   }
 
   async function renderAudit() {
@@ -869,6 +946,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!statusButton || !selectedLoanId) {
       return;
     }
+    if (statusButton.disabled) {
+      return;
+    }
 
     const notes = window.prompt("Optional super admin note:", "") || "";
     await window.CraneApi.updateLoanStatus(selectedLoanId, {
@@ -885,7 +965,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("super-detail-documents").addEventListener("click", async (event) => {
     const documentButton = event.target.closest("[data-super-document-id]");
-    if (!documentButton || !selectedLoanId) {
+    if (!documentButton || !selectedLoanId || documentButton.disabled) {
       return;
     }
 
@@ -905,6 +985,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.CraneNotify.info("Select an application first.");
       return;
     }
+    if (Array.from(event.currentTarget.elements).some((element) => element.disabled)) {
+      return;
+    }
 
     const message = event.currentTarget.elements.message.value.trim();
     if (!message) {
@@ -921,6 +1004,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     event.preventDefault();
     if (!selectedLoanId) {
       window.CraneNotify.info("Select an application first.");
+      return;
+    }
+    if (Array.from(event.currentTarget.elements).some((element) => element.disabled)) {
       return;
     }
 

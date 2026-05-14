@@ -4,7 +4,7 @@ const { getUserLoans } = require("../models/loan-model");
 const { getDocumentsForLoan } = require("../models/document-model");
 const { getNotificationsForAccount } = require("../models/notification-model");
 const { processAndStoreDocument } = require("../services/document-service");
-const { submitLoanApplication } = require("../services/loan-service");
+const { AWAITING_DOCUMENTS_NOTE, submitLoanApplication } = require("../services/loan-service");
 const { createNotification, markNotificationRead } = require("../services/notification-service");
 const { emitToRole } = require("../services/socket-bus");
 const { logAuditEvent } = require("../services/audit-service");
@@ -78,6 +78,20 @@ async function uploadDocument(req, res) {
     loanApplicationId: loan.id,
     documentType: req.body.documentType
   });
+
+  let refreshedLoan = loan;
+  if (loan.review_notes === AWAITING_DOCUMENTS_NOTE) {
+    const resetLoanResult = await query(
+      `UPDATE loan_applications
+       SET review_notes = NULL, updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [loan.id]
+    );
+    refreshedLoan = resetLoanResult.rows[0] || loan;
+    emitToRole("admin", "loan:updated", refreshedLoan);
+    emitToRole("super_admin", "loan:updated", refreshedLoan);
+  }
 
   await createNotification({
     audienceRole: "admin",

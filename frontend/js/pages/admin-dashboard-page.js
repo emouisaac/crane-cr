@@ -140,6 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let selectedLoanDetail = null;
   let currentAccount = null;
   let refreshTimer = null;
+  const FINALIZED_LOAN_STATUSES = new Set(["approved", "rejected", "closed", "disbursed"]);
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -178,6 +179,41 @@ document.addEventListener("DOMContentLoaded", async () => {
       return "Super Admin";
     }
     return ADMIN_ROLE_LABELS[account?.adminRole] || "Admin";
+  }
+
+  function getAdminWorkflowLock(loan = selectedLoanDetail?.loan) {
+    if (!loan) {
+      return {
+        locked: true,
+        reason: "Select an application first."
+      };
+    }
+
+    if (FINALIZED_LOAN_STATUSES.has(loan.status)) {
+      return {
+        locked: true,
+        reason: `This application is already ${formatStatus(loan.status)}.`
+      };
+    }
+
+    if (loan.status === "verification") {
+      return {
+        locked: true,
+        reason: "This application is now in the super admin workspace."
+      };
+    }
+
+    if (loan.waiting_for_documents) {
+      return {
+        locked: true,
+        reason: "Additional borrower documents are still pending."
+      };
+    }
+
+    return {
+      locked: false,
+      reason: ""
+    };
   }
 
   function getAccountName(account) {
@@ -490,14 +526,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     const canReviewDocuments = hasCapability(CAPABILITIES.DOCUMENTS_REVIEW);
     const canRequestDocuments = hasCapability(CAPABILITIES.DOCUMENTS_REQUEST);
     const canAddComments = hasCapability(CAPABILITIES.COMMENTS_ADD);
+    const workflowLock = getAdminWorkflowLock();
 
     document.querySelectorAll("[data-status-action]").forEach((button) => {
       const isApprove = button.dataset.statusAction === "approved";
       const isAllowed = isApprove ? canApprove : canUpdateStatuses;
       button.hidden = !isAllowed;
-      button.disabled = !isAllowed || !hasSelectedLoan;
+      button.disabled = !isAllowed || !hasSelectedLoan || workflowLock.locked;
       if (isApprove && !canApprove) {
         button.title = "Only a super admin can approve loans.";
+      } else if (workflowLock.locked) {
+        button.title = workflowLock.reason;
       } else if (!hasSelectedLoan) {
         button.title = "Select an application first.";
       } else {
@@ -507,13 +546,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.querySelectorAll("[data-open-request-documents]").forEach((button) => {
       button.hidden = !canRequestDocuments;
-      button.disabled = !canRequestDocuments || !hasSelectedLoan;
-      button.title = !hasSelectedLoan ? "Select an application first." : "";
+      button.disabled = !canRequestDocuments || !hasSelectedLoan || workflowLock.locked;
+      button.title = !hasSelectedLoan ? "Select an application first." : workflowLock.reason;
     });
 
     document.querySelectorAll("#detail-documents [data-document-id]").forEach((button) => {
       button.hidden = !canReviewDocuments;
-      button.disabled = !canReviewDocuments || !hasSelectedLoan;
+      button.disabled = !canReviewDocuments || !hasSelectedLoan || workflowLock.locked;
     });
 
     const requestForm = document.getElementById("request-documents-form");
@@ -522,14 +561,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (requestForm) {
       requestForm.hidden = !canRequestDocuments;
       Array.from(requestForm.elements).forEach((element) => {
-        element.disabled = !canRequestDocuments || !hasSelectedLoan;
+        element.disabled = !canRequestDocuments || !hasSelectedLoan || workflowLock.locked;
       });
     }
 
     if (noteForm) {
       noteForm.hidden = !canAddComments;
       Array.from(noteForm.elements).forEach((element) => {
-        element.disabled = !canAddComments || !hasSelectedLoan;
+        element.disabled = !canAddComments || !hasSelectedLoan || workflowLock.locked;
       });
     }
   }

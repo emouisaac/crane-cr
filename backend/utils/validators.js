@@ -21,16 +21,49 @@ function normalizeEmail(value) {
   return cleaned;
 }
 
+function extractUgandaSubscriberDigits(value) {
+  const digits = cleanString(value).replace(/\D/g, "");
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.length === 9) {
+    return digits;
+  }
+  if (digits.length === 10 && digits.startsWith("0")) {
+    return digits.slice(1);
+  }
+  if (digits.length === 12 && digits.startsWith("256")) {
+    return digits.slice(3);
+  }
+  if (digits.length > 12 && (digits.startsWith("256") || digits.startsWith("0"))) {
+    return digits.slice(-9);
+  }
+
+  return "";
+}
+
 function normalizePhone(value) {
-  const digits = cleanString(value).replace(/[^\d+]/g, "");
+  const cleaned = cleanString(value);
+  if (!cleaned) {
+    return null;
+  }
+
+  const ugandaSubscriberDigits = extractUgandaSubscriberDigits(cleaned);
+  if (ugandaSubscriberDigits) {
+    const normalizedUgandaPhone = `+256${ugandaSubscriberDigits}`;
+    if (!validator.isMobilePhone(normalizedUgandaPhone, "en-UG", { strictMode: true })) {
+      throw new AppError(400, "A valid phone number is required.");
+    }
+    return normalizedUgandaPhone;
+  }
+
+  const digits = cleaned.replace(/[^\d+]/g, "");
   if (!digits) {
     return null;
   }
 
   let normalized = digits;
-  if (normalized.startsWith("0")) {
-    normalized = `+256${normalized.slice(1)}`;
-  }
   if (!normalized.startsWith("+")) {
     normalized = `+${normalized}`;
   }
@@ -74,6 +107,7 @@ function requiredText(value, fieldName) {
 
 module.exports = {
   cleanString,
+  extractUgandaSubscriberDigits,
   sanitizeNullableString,
   normalizeEmail,
   normalizePhone,
