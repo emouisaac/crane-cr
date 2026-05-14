@@ -4,7 +4,7 @@ const { listAdmins, listUsers } = require("../models/account-model");
 const { getAllLoans } = require("../models/loan-model");
 const { getNotificationsForAccount } = require("../models/notification-model");
 const { createBackup, listBackups, restoreBackup } = require("../services/backup-service");
-const { createNotification } = require("../services/notification-service");
+const { createNotification, markNotificationRead } = require("../services/notification-service");
 const { revokeAllSessionsForAccount } = require("../services/auth-service");
 const { emitToAccount, emitToRole } = require("../services/socket-bus");
 const { logAuditEvent } = require("../services/audit-service");
@@ -39,6 +39,11 @@ async function dashboard(req, res) {
       liveApplications: loans.filter((loan) => ["submitted", "under_review", "verification"].includes(loan.status)).length
     }
   });
+}
+
+async function readNotification(req, res) {
+  const item = await markNotificationRead(req.params.notificationId, req.auth);
+  res.json({ notification: item });
 }
 
 async function createAdmin(req, res) {
@@ -269,6 +274,7 @@ module.exports = {
   createAdmin,
   dashboard,
   forceLogout,
+  readNotification,
   securityAlerts,
   setAccountStatus,
   triggerBackup,

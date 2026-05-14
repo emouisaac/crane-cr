@@ -148,7 +148,7 @@ async function notifications(req, res) {
 }
 
 async function readNotification(req, res) {
-  const item = await markNotificationRead(req.params.notificationId, req.auth.id);
+  const item = await markNotificationRead(req.params.notificationId, req.auth);
   res.json({ notification: item });
 }
 

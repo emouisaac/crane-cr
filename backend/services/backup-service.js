@@ -9,6 +9,7 @@ const backupTables = [
   "account_devices",
   "sessions",
   "notifications",
+  "notification_reads",
   "loan_applications",
   "loan_status_history",
   "documents",

@@ -6,7 +6,7 @@ const { getDocumentsForLoan } = require("../models/document-model");
 const { listUsers } = require("../models/account-model");
 const { getNotificationsForAccount } = require("../models/notification-model");
 const { AWAITING_DOCUMENTS_NOTE, updateLoanStatus } = require("../services/loan-service");
-const { createNotification } = require("../services/notification-service");
+const { createNotification, markNotificationRead } = require("../services/notification-service");
 const { revokeAllSessionsForAccount } = require("../services/auth-service");
 const { emitToAccount, emitToRole } = require("../services/socket-bus");
 const { logAuditEvent } = require("../services/audit-service");
@@ -212,6 +212,12 @@ async function requestDocuments(req, res) {
   res.json({ success: true });
 }
 
+async function readNotification(req, res) {
+  requireCapability(req.auth, CAPABILITIES.NOTIFICATIONS_VIEW);
+  const item = await markNotificationRead(req.params.notificationId, req.auth);
+  res.json({ notification: item });
+}
+
 async function addInternalComment(req, res) {
   requireCapability(req.auth, CAPABILITIES.COMMENTS_ADD);
   const result = await query(
@@ -239,6 +245,7 @@ module.exports = {
   dashboard,
   downloadDocument,
   requestDocuments,
+  readNotification,
   resetUserPin,
   reviewLoan,
   users,

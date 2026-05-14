@@ -14,6 +14,7 @@ router.patch("/applications/:loanId/status", asyncHandler(controller.reviewLoan)
 router.patch("/documents/:documentId", asyncHandler(controller.verifyDocument));
 router.get("/documents/:documentId/file", asyncHandler(controller.downloadDocument));
 router.get("/users", asyncHandler(controller.users));
+router.post("/notifications/:notificationId/read", asyncHandler(controller.readNotification));
 router.post("/accounts/:accountId/reset-pin", asyncHandler(controller.resetUserPin));
 router.post("/applications/:loanId/request-documents", asyncHandler(controller.requestDocuments));
 router.post("/applications/:loanId/comments", asyncHandler(controller.addInternalComment));

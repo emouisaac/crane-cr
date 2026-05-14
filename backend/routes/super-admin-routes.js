@@ -14,6 +14,7 @@ router.patch("/accounts/:accountId/status", asyncHandler(controller.setAccountSt
 router.patch("/accounts/:accountId/admin-role", asyncHandler(controller.updateAdminRole));
 router.post("/accounts/:accountId/force-logout", asyncHandler(controller.forceLogout));
 router.patch("/accounts/:accountId/permissions", asyncHandler(controller.updatePermissions));
+router.post("/notifications/:notificationId/read", asyncHandler(controller.readNotification));
 router.get("/audit-logs", asyncHandler(controller.auditLogs));
 router.get("/security-alerts", asyncHandler(controller.securityAlerts));
 router.get("/backups", asyncHandler(controller.backups));

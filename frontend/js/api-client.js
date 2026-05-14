@@ -106,6 +106,24 @@
     userNotifications: () => request("/users/notifications"),
     markNotificationRead: (notificationId) => request(`/users/notifications/${notificationId}/read`, { method: "POST" }),
     adminDashboard: () => request("/admin/dashboard"),
+    markAdminNotificationRead: (notificationId) => request(`/admin/notifications/${notificationId}/read`, { method: "POST" }),
+    async markRoleNotificationRead(notificationId, role = "admin") {
+      const preferredPath = role === "super_admin"
+        ? `/super-admin/notifications/${notificationId}/read`
+        : `/admin/notifications/${notificationId}/read`;
+      const fallbackPath = role === "super_admin"
+        ? `/admin/notifications/${notificationId}/read`
+        : `/super-admin/notifications/${notificationId}/read`;
+
+      try {
+        return await request(preferredPath, { method: "POST" });
+      } catch (error) {
+        if (error.status !== 404) {
+          throw error;
+        }
+        return request(fallbackPath, { method: "POST" });
+      }
+    },
     adminApplication: (loanId) => request(`/admin/applications/${loanId}`),
     updateLoanStatus: (loanId, body) => request(`/admin/applications/${loanId}/status`, { method: "PATCH", body }),
     requestDocuments: (loanId, body) => request(`/admin/applications/${loanId}/request-documents`, { method: "POST", body }),

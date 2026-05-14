@@ -10,12 +10,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const profilePanel = document.querySelector(".profile-panel");
   const notificationBadge = document.querySelector(".notification-badge");
   const notificationDrawerList = document.querySelector(".notification-panel .notifications-list");
+  const borrowerSearchInput = document.querySelector("[data-super-borrower-search]");
+  const headerSearchBox = document.querySelector("[data-header-search]");
+  const mobileSearchButton = document.querySelector(".mobile-search-btn");
   const roleField = document.getElementById("super-admin-role");
   const permissionsPreview = document.getElementById("super-admin-permissions");
   let dashboard = null;
   let refreshTimer = null;
   let selectedLoanId = null;
   let selectedLoanDetail = null;
+  let borrowerSearchQuery = "";
   const FINALIZED_LOAN_STATUSES = new Set(["approved", "rejected", "closed", "disbursed"]);
 
   const ADMIN_ROLE_OPTIONS = [
@@ -82,6 +86,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function getAdminRoleDescription(adminRole) {
     return ADMIN_ROLE_DESCRIPTIONS[adminRole] || ADMIN_ROLE_DESCRIPTIONS.manager;
+  }
+
+  function normalizeSearchValue(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function matchesBorrowerSearch(...values) {
+    if (!borrowerSearchQuery) {
+      return true;
+    }
+    return values.some((value) => normalizeSearchValue(value).includes(borrowerSearchQuery));
   }
 
   function getSuperWorkflowLock(loan = selectedLoanDetail?.loan) {
@@ -317,6 +332,65 @@ document.addEventListener("DOMContentLoaded", async () => {
     permissionsPreview.value = getAdminRoleDescription(roleField.value);
   }
 
+  function getNotificationLoanId(notification) {
+    const payload = notification?.payload || {};
+    return payload.loanId || payload.loan_id || null;
+  }
+
+  function getNotificationApplicationCode(notification) {
+    const payload = notification?.payload || {};
+    return payload.applicationCode || payload.application_code || null;
+  }
+
+  function syncNotificationState(updatedNotification) {
+    if (!updatedNotification || !dashboard) {
+      return updatedNotification;
+    }
+
+    dashboard = {
+      ...dashboard,
+      notifications: (dashboard.notifications || []).map((item) => (item.id === updatedNotification.id ? updatedNotification : item))
+    };
+    renderNotifications();
+    return updatedNotification;
+  }
+
+  async function markDashboardNotificationRead(notificationId) {
+    const notification = dashboard?.notifications?.find((item) => item.id === notificationId);
+    if (!notification) {
+      return null;
+    }
+    if (notification.read_at) {
+      return notification;
+    }
+
+    const role = window.CraneAuth.getAccount()?.role || "super_admin";
+    const response = await window.CraneApi.markRoleNotificationRead(notificationId, role);
+    return syncNotificationState(response.notification || notification);
+  }
+
+  async function openNotificationDetails(notificationId) {
+    const notification = dashboard?.notifications?.find((item) => item.id === notificationId);
+    if (!notification) {
+      window.CraneNotify.info("That notification is no longer available.");
+      return;
+    }
+
+    const loanId = getNotificationLoanId(notification);
+    const applicationCode = getNotificationApplicationCode(notification);
+    await markDashboardNotificationRead(notificationId);
+
+    if (!loanId) {
+      window.CraneNotify.info("This notification has been marked as read.");
+      return;
+    }
+
+    setActiveView("applications");
+    notificationPanel?.classList.remove("active");
+    await fetchLoanDetail(loanId);
+    window.CraneNotify.success(`Opened ${applicationCode || "application"} details.`);
+  }
+
   function renderNotificationFeed(host, notifications, emptyMessage, limit = notifications.length) {
     if (!host) {
       return;
@@ -327,13 +401,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? items
           .map(
             (item) => `
-              <article class="notification-item">
+              <article class="notification-item ${item.read_at ? "" : "is-unread"}" data-notification-id="${item.id}">
                 <div class="role-item-head">
                   <div>
                     <strong>${escapeHtml(item.title || item.event_type || "Platform alert")}</strong>
                     <div class="role-list-note">${escapeHtml(item.message || item.identifier || item.ip_address || "No additional details")}</div>
                   </div>
-                  <span class="role-chip ${statusTone(item.level || item.status || "info")}">${escapeHtml(item.level || "info")}</span>
+                  <span class="role-chip ${item.read_at ? "info" : "warning"}">${item.read_at ? "Read" : "New"}</span>
+                </div>
+                <div class="role-item-meta notification-meta">
+                  <span>${escapeHtml(getNotificationApplicationCode(item) ? `Application ${getNotificationApplicationCode(item)}` : (item.event_type || "Platform alert"))}</span>
+                  <span>${escapeHtml(formatDateTime(item.created_at))}</span>
+                </div>
+                <div class="role-item-actions">
+                  <button type="button" class="button button-secondary" data-notification-action="open" data-notification-id="${item.id}">${getNotificationLoanId(item) ? "Info" : (item.read_at ? "Read" : "Mark Read")}</button>
                 </div>
               </article>
             `
@@ -401,7 +482,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function renderUsers() {
-    const users = (dashboard?.users || []).slice(0, 14);
+    const users = (dashboard?.users || [])
+      .filter((user) => matchesBorrowerSearch(user.full_name, user.email, user.phone))
+      .slice(0, 14);
     document.getElementById("super-users-list").innerHTML = users.length
       ? users
           .map(
@@ -501,7 +584,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function renderApplications() {
     const host = document.getElementById("super-applications-list");
-    const loans = dashboard?.loans || [];
+    const loans = (dashboard?.loans || []).filter((loan) => matchesBorrowerSearch(loan.user_name, loan.user_email, loan.user_phone));
     if (!host) {
       return;
     }
@@ -752,6 +835,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (notificationBadge) {
       notificationBadge.textContent = String(unreadCount);
+      notificationBadge.classList.toggle("is-empty", unreadCount === 0);
     }
 
     renderNotificationFeed(document.getElementById("super-notifications-list"), notifications, "No platform alerts yet.", 6);
@@ -869,6 +953,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     setActiveView("overview");
   });
 
+  mobileSearchButton?.addEventListener("click", () => {
+    headerSearchBox?.classList.toggle("is-active");
+    borrowerSearchInput?.focus();
+    borrowerSearchInput?.select();
+  });
+
+  borrowerSearchInput?.addEventListener("input", (event) => {
+    borrowerSearchQuery = normalizeSearchValue(event.target.value);
+    renderApplications();
+    renderUsers();
+  });
+
   document.querySelector('.footer-box[aria-label="Open navigation menu"]')?.addEventListener("click", () => {
     sidebarOverlay?.classList.toggle("active");
     dashboardSidebar?.classList.toggle("active");
@@ -938,6 +1034,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.body.addEventListener("click", async (event) => {
+    const notificationAction = event.target.closest("[data-notification-action]");
+    if (notificationAction) {
+      event.preventDefault();
+      try {
+        await openNotificationDetails(notificationAction.dataset.notificationId);
+      } catch (error) {
+        window.CraneNotify.error(error.message || "Unable to open notification details.");
+      }
+      return;
+    }
+
     const saveRoleButton = event.target.closest("[data-save-admin-role]");
     if (saveRoleButton) {
       const select = document.querySelector(`[data-admin-role-select="${saveRoleButton.dataset.saveAdminRole}"]`);
